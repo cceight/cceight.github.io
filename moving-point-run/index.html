@@ -341,8 +341,9 @@ const FANFARE={
   debuff:()=>{tone('sawtooth',NOTE(7),NOTE(1),0.32,0.08);tone('sawtooth',NOTE(1),NOTE(-6),0.5,0.08,0.34)},
 };
 // BGM (looped file published next to the page)
-const bgm=new Audio('bgm.mp3');bgm.loop=true;bgm.volume=0.32;bgm.preload='auto';
+const bgm=new Audio('bgm.mp3');bgm.loop=true;bgm.volume=0.15;bgm.preload='auto';
 const syncBgm=()=>{if(soundOn)bgm.play().catch(()=>{});else bgm.pause()};
+const stopBgm=()=>{bgm.pause();try{bgm.currentTime=0}catch(e){}};
 const sfxBlip=()=>tone('square',520+Math.random()*140,520,0.035,0.035);
 const sfxTap=()=>{tone('sine',880,1320,0.07,0.16)};
 const sfxGacha=()=>{tone('sine',1318.5,1318.5,0.25,0.14);tone('sine',1975.5,1975.5,0.4,0.12,0.09)};
@@ -592,7 +593,7 @@ function resume(){
 }
 
 function die(why){
-  G.dead=true;G.flash=1;alive=false;sfxDeath();
+  G.dead=true;G.flash=1;alive=false;sfxDeath();stopBgm();
   const score=Math.floor(G.x*10)/10;
   let nb=false;if(score>best){best=score;nb=true;try{localStorage.setItem('fnrun-best',String(best))}catch(e){}}
   updateUI(true);
@@ -801,6 +802,7 @@ function showOv(h){const o=$('ov');o.innerHTML=h;o.hidden=false}
 function hideOv(){$('ov').hidden=true}
 
 function title(){
+  stopBgm();
   $('ov').className='overlay';
   showOv(`<div class="logo">
       <svg viewBox="0 0 300 104" aria-hidden="true">
