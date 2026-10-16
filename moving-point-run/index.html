@@ -503,18 +503,18 @@ function play(slot){
 
 // ---------- gacha ----------
 let gTimer=0;
+const CARD_W={N:1.2,R:1.0,E:0.8};
 function rollCard(){
   const owned=new Set(G.hand);
   const avail=Object.keys(POOL).filter(k=>!owned.has(k));
   if(!avail.length)return null;
-  const byR=['N','R','E'].filter(r=>avail.some(k=>POOL[k]===r));
-  const r=pickW(byR.map(r=>[r,RAR[r].w]));
-  const c=avail.filter(k=>POOL[k]===r);
-  return c[Math.random()*c.length|0];
+  // per-card weight with a gentle slope by rarity
+  return pickW(avail.map(k=>[k,CARD_W[POOL[k]]]));
 }
 function rollItem(){
-  const cat=pickW([['buff',1],['change',1],['debuff',1]]);
-  const ks=Object.keys(ITEMS).filter(k=>ITEMS[k].cat===cat);
+  // buffs 20% of all pulls, change+debuff 10% (each pool split evenly)
+  const pool=Math.random()<2/3?['buff']:['change','debuff'];
+  const ks=Object.keys(ITEMS).filter(k=>pool.includes(ITEMS[k].cat));
   return ks[Math.random()*ks.length|0];
 }
 function miniPlot(id){
@@ -531,7 +531,7 @@ function miniPlot(id){
 }
 function gacha(){
   let kind='item',id=null;
-  if(Math.random()<0.6){id=rollCard();if(id)kind='card'}
+  if(Math.random()<0.7){id=rollCard();if(id)kind='card'}
   if(kind==='item')id=rollItem();
   G.paused=true;
   const col=kind==='card'?RAR[POOL[id]].col:CAT[ITEMS[id].cat].col;
