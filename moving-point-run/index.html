@@ -83,6 +83,7 @@ canvas{display:block;width:100%;height:100%}
 .tut-text{flex:1;min-height:0;overflow-y:auto;font-size:14.5px;line-height:1.75}
 .tut-text i{font-family:var(--f-num)}
 .tut-next{align-self:flex-end;font-size:12px;color:var(--dim);animation:blink 1s steps(2,start) infinite}
+.tut-r{display:flex;gap:8px;align-items:center}
 .tut-skip{border:1px solid var(--line);border-radius:3px;padding:6px 12px;font-size:13px}
 .speedup{position:absolute;left:0;right:0;top:38%;text-align:center;font-family:var(--f-display);font-weight:800;font-size:clamp(24px,8vw,36px);letter-spacing:.1em;color:var(--ink);pointer-events:none;opacity:0}
 .speedup small{display:block;font-family:var(--f-display);font-weight:700;font-size:15px;letter-spacing:.1em;color:var(--dim);margin-top:4px}
@@ -188,7 +189,7 @@ details.howto b{color:var(--ink)}
   <div class="cards" id="cards"></div>
   <div class="overlay" id="ov"></div>
   <div class="tut" id="tut" hidden>
-    <div class="tut-head"><span class="ttl">Tutorial</span><span class="cnt" id="tCnt"></span><button class="tut-skip" id="tSkip">スキップ</button></div>
+    <div class="tut-head"><span class="ttl">Tutorial</span><span class="cnt" id="tCnt"></span><span class="tut-r"><button class="snd" id="tSnd">音 OFF</button><button class="tut-skip" id="tSkip">スキップ</button></span></div>
     <div class="tut-stage" id="tStage"><canvas id="tcv"></canvas></div>
     <div class="tut-box" id="tBox">
       <div class="face" id="tFace"></div>
@@ -315,8 +316,36 @@ function note(idx){
     const o=AC.createOscillator(),g=AC.createGain();o.type=type;o.frequency.value=f*m;g.gain.value=a;o.connect(g);g.connect(out);o.start(t);o.stop(t+1.35);
   });
 }
-function setSnd(){$('sndBtn').textContent=soundOn?'音 ON':'音 OFF';$('sndBtn').classList.toggle('on',soundOn)}
-$('sndBtn').onclick=()=>{soundOn=!soundOn;try{localStorage.setItem('fnrun-snd',soundOn?'1':'0')}catch(e){}if(soundOn)ensureAudio();setSnd()};
+function setSnd(){['sndBtn','tSnd'].forEach(id=>{const b=$(id);if(!b)return;b.textContent=soundOn?'音 ON':'音 OFF';b.classList.toggle('on',soundOn)})}
+const toggleSnd=()=>{soundOn=!soundOn;try{localStorage.setItem('fnrun-snd',soundOn?'1':'0')}catch(e){}if(soundOn)ensureAudio();setSnd();syncBgm()};
+$('sndBtn').onclick=toggleSnd;
+// ---- sound effects ----
+function tone(type,f0,f1,dur,vol,delay=0){
+  if(!soundOn||!AC)return;
+  const t=AC.currentTime+delay,o=AC.createOscillator(),g=AC.createGain();
+  o.type=type;o.frequency.setValueAtTime(f0,t);if(f1!==f0)o.frequency.exponentialRampToValueAtTime(f1,t+dur);
+  g.gain.setValueAtTime(0.0001,t);g.gain.exponentialRampToValueAtTime(vol,t+0.008);g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+  o.connect(g);g.connect(AC.destination);o.start(t);o.stop(t+dur+0.02);
+}
+const sfxDeath=()=>{tone('triangle',880,90,0.75,0.28)};
+// gacha: rattle while the box shakes, then a fanfare that matches the result
+const sfxRattle=()=>{let t=0;for(let k=0;k<14;k++){t+=0.09*Math.pow(0.86,k);tone('square',180+k*22,140+k*18,0.03,0.05,t)}};
+const NOTE=n=>261.63*Math.pow(2,n/12);
+const arp=(ns,step,vol,type='triangle',len=0.5)=>ns.forEach((n,i)=>tone(type,NOTE(n),NOTE(n),len,vol,i*step));
+const FANFARE={
+  N:()=>arp([12,19],0.1,0.14),
+  R:()=>arp([12,16,19,24],0.08,0.14),
+  E:()=>{arp([12,16,19,24,28,31,36],0.06,0.13);arp([36,43],0.09,0.06,'sine',0.9)},
+  buff:()=>{arp([12,16,19],0,0.1,'triangle',0.7);arp([24],0.12,0.12,'sine',0.6)},
+  change:()=>arp([12,14,18,20,22],0.08,0.12,'sine',0.6),
+  debuff:()=>{tone('sawtooth',NOTE(7),NOTE(1),0.32,0.08);tone('sawtooth',NOTE(1),NOTE(-6),0.5,0.08,0.34)},
+};
+// BGM (looped file published next to the page)
+const bgm=new Audio('bgm.mp3');bgm.loop=true;bgm.volume=0.32;bgm.preload='auto';
+const syncBgm=()=>{if(soundOn)bgm.play().catch(()=>{});else bgm.pause()};
+const sfxBlip=()=>tone('square',520+Math.random()*140,520,0.035,0.035);
+const sfxTap=()=>{tone('sine',880,1320,0.07,0.16)};
+const sfxGacha=()=>{tone('sine',1318.5,1318.5,0.25,0.14);tone('sine',1975.5,1975.5,0.4,0.12,0.09)};
 
 // ---------- state ----------
 let G=null,raf=0,last=0,alive=false;
@@ -327,7 +356,7 @@ function freshState(){
     hand:['const','x','nx',null,null],cd:[0,0,0,0,0],cdMax:[1,1,1,1,1],
     trail:[[0,0]],path:[[0,0]],lastPathX:0,gates:[],items:[],fx:{},
     gen:{x:6,c:1.8,mode:'sparse',left:3,tunnel:null,first:true,nextItem:16},
-    dead:false,paused:false,flash:0,camB:-0.8,zoom:1,t:0,lv:0,lastPass:-9,chain:0};
+    dead:false,paused:false,flash:0,camB:-0.8,zoom:1,t:0,lv:0,lastPassX:-99,chain:0};
 }
 function newGame(){
   ensureAudio();
@@ -450,8 +479,9 @@ function step(dt){
   if(got)gacha();
 }
 function passNote(){
-  G.chain=(G.t-G.lastPass<0.6)?(G.chain+1)%SCALE.length:0;
-  G.lastPass=G.t;note(G.chain);
+  // chained if the previous gate was within 3 units of x (so the window shrinks in time as speed rises)
+  G.chain=(G.x-G.lastPassX<3)?(G.chain+1)%SCALE.length:0;
+  G.lastPassX=G.x;note(G.chain);
 }
 
 function releaseActive(){
@@ -506,7 +536,9 @@ function gacha(){
   const col=kind==='card'?RAR[POOL[id]].col:CAT[ITEMS[id].cat].col;
   const ov=$('ov');ov.className='overlay gacha';ov.style.setProperty('--rc',col);
   showOv(`<div class="rays" id="rays"></div><div class="gbox">？</div>`);
+  sfxRattle();
   setTimeout(()=>{
+    (kind==='card'?FANFARE[POOL[id]]:FANFARE[ITEMS[id].cat])();
     const fl=document.createElement('div');fl.className='flashw';document.body.appendChild(fl);setTimeout(()=>fl.remove(),520);
     $('rays')?.classList.add('on');
     ov.querySelector('.gbox')?.remove();
@@ -560,7 +592,7 @@ function resume(){
 }
 
 function die(why){
-  G.dead=true;G.flash=1;alive=false;
+  G.dead=true;G.flash=1;alive=false;sfxDeath();
   const score=Math.floor(G.x*10)/10;
   let nb=false;if(score>best){best=score;nb=true;try{localStorage.setItem('fnrun-best',String(best))}catch(e){}}
   updateUI(true);
@@ -785,8 +817,9 @@ function title(){
     <div class="sub">ベスト <i>x</i> = ${best.toFixed(1)}</div>
     <button class="btn" id="go">スタート</button>
     <button class="btn ghost" id="tutBtn">チュートリアル</button>
+    <div class="sub" style="font-size:11px">BGM：魔王魂</div>
     <button class="modeBtn ${BOARD?'to-note':'to-board'}" id="modeBtn">${BOARD?'板書モード':'黒板モード'}</button>`);
-  $('go').onclick=newGame;
+  $('go').onclick=()=>{newGame();syncBgm()};
   $('tutBtn').onclick=startTut;
   $('modeBtn').onclick=()=>{BOARD=!BOARD;try{localStorage.setItem('mpr-board',BOARD?'1':'0')}catch(e){}document.documentElement.dataset.mode=BOARD?'board':'';readTokens();handKey='';if(G)updateUI(true);title()};
   const hint=$('hint'),story=hint.closest('.story');
@@ -826,7 +859,7 @@ const SCRIPT=[
 ];
 let T={on:false,i:0,typing:false,timer:0,full:'',demo:'none',t0:0};
 function startTut(){
-  hideOv();$('tText').innerHTML='';$('tut').hidden=false;sizeTut();T.on=true;T.i=0;T.demo='';showLine();requestAnimationFrame(tutLoop);
+  ensureAudio();syncBgm();hideOv();$('tText').innerHTML='';$('tut').hidden=false;T.lastX=-1;sizeTut();T.on=true;T.i=0;T.demo='';showLine();requestAnimationFrame(tutLoop);
 }
 function endTut(){clearInterval(T.timer);T.on=false;$('tut').hidden=true;title()}
 function showLine(){
@@ -834,17 +867,18 @@ function showLine(){
   const f=$('tFace');
   f.innerHTML=FACES[face]?`<img src="${FACES[face]}" alt="">`:`顔<small>${FACE_NAME[face]}</small>`;
   f.dataset.face=face;
-  if(demo!==T.demo){T.demo=demo;T.t0=performance.now()}
+  if(demo!==T.demo){T.demo=demo;T.t0=performance.now();T.lastX=-1}
   $('tCnt').textContent=`${T.i+1} / ${SCRIPT.length}`;
   T.full=text;T.typing=true;$('tNext').style.visibility='hidden';
   // type out plain characters; tags appear whole
   const parts=text.match(/<[^>]+>|[^<]/g);let n=0;
   clearInterval(T.timer);
-  T.timer=setInterval(()=>{n++;$('tText').innerHTML=parts.slice(0,n).join('');if(n>=parts.length)finishType()},28);
+  T.timer=setInterval(()=>{n++;$('tText').innerHTML=parts.slice(0,n).join('');const ch=parts[n-1]||'';if(n%2===0&&ch.length===1&&!/[\s、。！？]/.test(ch))sfxBlip();if(n>=parts.length)finishType()},28);
 }
 function finishType(){clearInterval(T.timer);T.typing=false;$('tText').innerHTML=T.full;$('tNext').style.visibility='visible';$('tNext').textContent=T.i===SCRIPT.length-1?'▼ タップでタイトルへ':'▼ タップで次へ'}
-$('tBox').addEventListener('click',()=>{if(!T.on)return;if(T.typing)return finishType();if(T.i>=SCRIPT.length-1)return endTut();T.i++;showLine()});
+$('tBox').addEventListener('click',()=>{if(!T.on)return;sfxTap();if(T.typing)return finishType();if(T.i>=SCRIPT.length-1)return endTut();T.i++;showLine()});
 $('tSkip').onclick=endTut;
+$('tSnd').onclick=e=>{e.stopPropagation();toggleSnd()};
 
 const tcv=$('tcv'),tctx=tcv.getContext('2d');let TW=0,TH=0;
 function sizeTut(){const r=$('tStage').getBoundingClientRect();if(!r.width)return;const d=Math.min(2,devicePixelRatio||1);TW=r.width;TH=r.height;tcv.width=TW*d;tcv.height=TH*d;tctx.setTransform(d,0,0,d,0,0)}
@@ -870,6 +904,10 @@ function tutLoop(now){
     return [px,py];
   };
   const D=T.demo;
+  // demo sound cues: fire once when the demo's point crosses its event x
+  const cross=(px,at,fn)=>{if(T.lastX<at&&px>=at)fn()};
+  {const cyc={switch:[8,3,sfxTap],formula:[8,3,sfxTap],crash:[7,5,sfxDeath],floor:[7,5,sfxDeath],box:[7,5,sfxGacha],gate:[10.5,5,()=>note(0)]}[D];
+   if(cyc){const px=(t*1.8)%cyc[0];if(px<T.lastX)T.lastX=-1;cross(px,cyc[1],cyc[2]);T.lastX=px}}
   if(D==='run'){runPath(x=>0,9,DEFS.const.col);label('動点P →',X(1),Y(1.2),COL.dim,16)}
   else if(D==='switch'||D==='formula'){
     const f=x=>x<3?2.6:2.6+(x-3);
