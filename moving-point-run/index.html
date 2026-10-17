@@ -92,8 +92,9 @@ canvas{display:block;width:100%;height:100%}
 @keyframes su{0%{opacity:0;transform:scale(1.4)}15%{opacity:1;transform:scale(1)}75%{opacity:1}100%{opacity:0;transform:translateY(-12px)}}
 
 .cards{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
-.card{position:relative;overflow:hidden;background:var(--panel);border:1px solid var(--line);border-radius:3px;padding:8px 3px 7px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-height:84px;min-width:0}
-.card .nm{font-family:var(--f-num);font-weight:600;font-size:clamp(15px,4.6vw,21px);color:var(--c);position:relative;z-index:1;white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis}
+.card{position:relative;overflow:hidden;background:var(--panel);border:1px solid var(--line);border-radius:3px;padding:8px 3px 7px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;height:96px;box-sizing:border-box;min-width:0}
+.card .nm{font-family:var(--f-num);font-weight:600;font-size:clamp(12px,3.6vw,17px);line-height:1.15;color:var(--c);position:relative;z-index:1;text-align:center;max-width:100%;overflow-wrap:anywhere}
+.card .nm sup{font-size:.7em}
 .card .nm.small{font-size:clamp(11px,3.4vw,14px)}
 .card .fx{font-family:var(--f-num);font-size:clamp(10px,2.9vw,12.5px);line-height:1.3;color:var(--dim);text-align:center;overflow-wrap:anywhere;position:relative;z-index:1;font-variant-numeric:tabular-nums}
 .card .cd{position:absolute;inset:0;z-index:2;pointer-events:none}
@@ -157,7 +158,7 @@ details.howto b{color:var(--ink)}
 .gcard{width:210px;max-width:100%;border:2px solid var(--rc);border-radius:6px;background:var(--paper);padding:16px 12px;display:flex;flex-direction:column;align-items:center;gap:8px;box-shadow:0 0 0 6px color-mix(in srgb,var(--rc) 14%,transparent),0 12px 30px color-mix(in srgb,var(--rc) 30%,transparent);animation:flip .55s ease-out}
 @keyframes flip{0%{transform:perspective(600px) rotateY(90deg) scale(.8)}100%{transform:perspective(600px) rotateY(0) scale(1)}}
 @keyframes pop{0%{transform:scale(.4);opacity:0}70%{transform:scale(1.15)}100%{transform:scale(1);opacity:1}}
-.gcard .gn{font-family:var(--f-num);font-weight:600;font-size:34px;color:var(--c)}
+.gcard .gn{font-family:var(--f-num);font-weight:600;font-size:28px;color:var(--c);text-align:center;line-height:1.2}
 .gcard .gs{font-family:var(--f-num);font-weight:600;font-size:44px;color:var(--rc);line-height:1}
 .gcard .gt{font-family:var(--f-display);font-weight:800;font-size:22px}
 .gcard svg{width:100%;height:auto;max-width:170px}
@@ -223,6 +224,7 @@ const iflo=u=>{const n=Math.floor(u);return n*(n-1)/2+n*(u-n)};
 const L=(lin,nm,col,d)=>({lin,nm,col,d,g:u=>lin*u});
 const E=(nm,g,ex,c0,col,d)=>({nm,g,ex,c0,col,d});
 const par=s=>s==='x'?'x':`(${s})`;
+const fullNm=id=>id==='const'?DEFS.const.nm:`<i>y</i> = ${DEFS[id].nm}`;
 const DEFS={
   const:{...L(0,'<i>y</i> = const','#5b6b8c','今の高さで水平に進む')},
   x:L(1,'<i>x</i>','#0e9f84','まっすぐ上昇'),
@@ -259,14 +261,55 @@ const DEFS={
   nasin:E('−arcsin <i>x</i>',u=>-Math.asin(Math.min(1,u)),s=>`−arcsin(${s})`,0,'#aa7fe6',''),
   acos:E('arccos(1−<i>x</i>)',u=>Math.acos(Math.max(-1,1-u)),s=>`arccos(1 − ${par(s)})`,0,'#d2519f',''),
   nacos:E('−arccos(1−<i>x</i>)',u=>-Math.acos(Math.max(-1,1-u)),s=>`−arccos(1 − ${par(s)})`,0,'#e070af',''),
+
+  // ---- added functions (sh: the card is f(x − (x0 + sh)) so its natural start sits on the point) ----
+  exp:E('e<sup><i>x</i></sup>',u=>Math.exp(Math.min(u,40))-1,s=>s==='x'?'eˣ':`e^${par(s)}`,-1,'#c0392b','最初はゆるやか、後から爆発'),
+  log:{...E('log <i>x</i>',u=>Math.log(u+1),s=>`log ${par(s)}`,0,'#16a085','急に上がって、だんだん寝ていく'),sh:-1},
+  abssin:E('|sin <i>x</i>|',u=>Math.abs(Math.sin(u)),s=>`|sin(${s})|`,0,'#8e44ad','ぴょんぴょん跳ねるボール'),
+  tan:E('tan <i>x</i>',u=>Math.max(-1e4,Math.min(1e4,Math.tan(u))),s=>`tan(${s})`,0,'#d35400','すぐ真上に吹っ飛ぶ。放っておくと奈落へ'),
+  xsin:E('<i>x</i> sin <i>x</i>',u=>u*Math.sin(u),s=>`${par(s)} sin(${s})`,0,'#a93226','振れ幅がどんどん大きくなる波'),
+  sinsq:E('sin <i>x</i>²',u=>Math.sin(u*u),s=>`sin(${par(s)}²)`,0,'#6c3483','波がどんどん細かくなる'),
+  damp:E('e<sup>−<i>x</i></sup> sin <i>x</i>',u=>Math.exp(-u)*Math.sin(u),s=>s==='x'?'e⁻ˣ sin x':`e^−${par(s)} sin(${s})`,0,'#1f618d','バネみたいにビヨンと揺れて落ち着く'),
+  saw:E('<i>x</i> − ⌊<i>x</i>⌋',u=>u-Math.floor(u),s=>`${s} − ⌊${s}⌋`,0,'#117a65','上がってはストンと落ちるのこぎり'),
+  sgn:E('sgn(sin <i>x</i>)',u=>u<=0?0:Math.sign(Math.sin(u)),s=>`sgn(sin(${s}))`,0,'#b03a2e','上下にカクッと瞬間移動を繰り返す'),
+  semi:{...E('√(1 − <i>x</i>²)',u=>u>=2?0:sq(1-(u-1)*(u-1)),s=>`√(1 − ${par(s)}²)`,0,'#2874a6','半円をなぞって一山越える'),sh:1},
+  recip:{...E('1/<i>x</i>',u=>1/(u+1)-1,s=>`1/${par(s)}`,-1,'#7d6608','最初だけ急降下して、すぐ寝そべる'),sh:-1},
+  // derivative / antiderivative / inverse targets for the added functions
+  xlogx:{...E('<i>x</i> log <i>x</i> − <i>x</i>',u=>(u+1)*Math.log(u+1)-u,s=>`${par(s)} log ${par(s)} − ${par(s)}`,1,'#138d75',''),sh:-1},
+  nrecip2:{...E('−1/<i>x</i>²',u=>1-1/((u+1)*(u+1)),s=>`−1/${par(s)}²`,1,'#9a7d0a',''),sh:-1},
+  dabs:E('cos <i>x</i>·sgn(sin <i>x</i>)',u=>u<=0?0:Math.cos(u)*Math.sign(Math.sin(u))-1,s=>`cos(${s})·sgn(sin(${s}))`,-1,'#9b59b6',''),
+  iabs:E('∫|sin <i>x</i>|',u=>2*Math.floor(u/Math.PI)+1-Math.cos(u-Math.PI*Math.floor(u/Math.PI)),s=>`∫|sin(${s})|`,0,'#7d3c98',''),
+  isaw:E('∫(<i>x</i> − ⌊<i>x</i>⌋)',u=>{const n=Math.floor(u),f=u-n;return n/2+f*f/2},s=>`∫(${s} − ⌊${s}⌋)`,0,'#0e6655',''),
+  tri:E('∫sgn(sin <i>x</i>)',u=>{const m=u-2*Math.PI*Math.floor(u/(2*Math.PI));return m<Math.PI?m:2*Math.PI-m},s=>`∫sgn(sin(${s}))`,0,'#cb4335',''),
+  isemi:{...E('∫√(1 − <i>x</i>²)',u=>{const t=Math.min(u,2)-1;return (t*sq(1-t*t)+Math.asin(Math.max(-1,Math.min(1,t))))/2+Math.PI/4},s=>`∫√(1 − ${par(s)}²)`,0,'#1a5276',''),sh:1},
+  sec2:E('1/cos²<i>x</i>',u=>Math.min(1e4,1/(Math.cos(u)**2))-1,s=>`1/cos²(${s})`,-1,'#e67e22',''),
+  lncos:E('−log|cos <i>x</i>|',u=>Math.min(1e4,-Math.log(Math.abs(Math.cos(u))+1e-12)),s=>`−log|cos(${s})|`,0,'#ba4a00',''),
+  atan:E('arctan <i>x</i>',u=>Math.atan(u),s=>`arctan(${s})`,0,'#dc7633',''),
+  dxsin:E('sin <i>x</i> + <i>x</i> cos <i>x</i>',u=>Math.sin(u)+u*Math.cos(u),s=>`sin(${s}) + ${par(s)} cos(${s})`,0,'#c0392b',''),
+  ixsin:E('sin <i>x</i> − <i>x</i> cos <i>x</i>',u=>Math.sin(u)-u*Math.cos(u),s=>`sin(${s}) − ${par(s)} cos(${s})`,0,'#922b21',''),
+  dsinsq:E('2<i>x</i> cos <i>x</i>²',u=>2*u*Math.cos(u*u),s=>`2${par(s)} cos(${par(s)}²)`,0,'#76448a',''),
+  isinsq:E('∫sin <i>x</i>²',u=>{if(u<=0)return 0;const n=2*Math.max(4,Math.ceil(u*4)),h=u/n;let a=0;for(let k=0;k<=n;k++){const v=k*h,w=k===0||k===n?1:k%2?4:2;a+=w*Math.sin(v*v)}return a*h/3},s=>`∫sin(${par(s)}²)`,0,'#5b2c6f',''),
+  ddamp:E('e<sup>−<i>x</i></sup>(cos <i>x</i> − sin <i>x</i>)',u=>Math.exp(-u)*(Math.cos(u)-Math.sin(u))-1,s=>`e^−${par(s)} (cos(${s}) − sin(${s}))`,-1,'#2471a3',''),
+  idamp:E('−½e<sup>−<i>x</i></sup>(sin <i>x</i> + cos <i>x</i>)',u=>-Math.exp(-u)*(Math.sin(u)+Math.cos(u))/2+.5,s=>`−½e^−${par(s)} (sin(${s}) + cos(${s}))`,.5,'#1b4f72',''),
 };
-for(const k in DEFS){const base=DEFS[k].col;Object.defineProperty(DEFS[k],'col',{get:()=>BOARD?chalk(base):base})}
-const POOL={x:'N',nx:'N',hx:'N',sin:'R',cos:'R',floor:'R',hx2:'E',nhx2:'E',sqrt:'E',nsqrt:'E'};
+const POOL={x:'N',nx:'N',hx:'N',dbl:'N',ndbl:'N',sin:'R',cos:'R',floor:'R',abssin:'R',saw:'R',semi:'R',recip:'R',log:'R',hx2:'E',nhx2:'E',sqrt:'E',nsqrt:'E',exp:'E',damp:'E',sgn:'E',tan:'E',xsin:'E',sinsq:'E'};
+DEFS.dbl.d='急角度で上昇';DEFS.ndbl.d='急角度で下降';
 const NEG={};[['x','nx'],['hx','nhx'],['dbl','ndbl'],['sin','nsin'],['cos','ncos'],['floor','nfloor'],['hx2','nhx2'],['qx2','nqx2'],['x2','nx2'],['cube','ncube'],['sqrt','nsqrt'],['s2x','ns2x'],['p32','np32'],['rs','nrs'],['ifl','nifl'],['asin','nasin'],['acos','nacos']].forEach(([a,b])=>{NEG[a]=b;NEG[b]=a});NEG.const='const';
+// true when the expression has a + or − at the top level (outside any brackets), i.e. needs parentheses before a leading −
+const topOp=e=>{let d=0,bar=false;for(let i=0;i<e.length;i++){const c=e[i];if('(⌊'.includes(c))d++;else if(')⌋'.includes(c))d--;else if(c==='|'){bar=!bar;bar?d++:d--}else if(i>0&&d===0&&(c==='+'||(c==='−'&&e[i-1]===' ')))return true}return false};
+for(const k of Object.keys(DEFS)){
+  if(NEG[k])continue;const D=DEFS[k],nk='neg_'+k;
+  DEFS[nk]={nm:topOp(D.nm.replace(/<[^>]+>/g,''))?`−(${D.nm})`:`−${D.nm}`,g:u=>-D.g(u),ex:s=>{const e=D.ex(s);return topOp(e)?`−(${e})`:`−${e}`},c0:-D.c0,sh:D.sh,col:D.col,d:''};
+  NEG[k]=nk;NEG[nk]=k;
+}
+for(const k in DEFS){const base=DEFS[k].col;Object.defineProperty(DEFS[k],'col',{get:()=>BOARD?chalk(base):base})}
 const FORM={
-  diff:{const:'const',x:'const',nx:'const',hx:'const',sin:'cos',cos:'nsin',floor:'const',hx2:'x',nhx2:'nx',sqrt:'rs',nsqrt:'nrs'},
-  int:{const:'const',x:'hx2',nx:'nhx2',hx:'qx2',sin:'ncos',cos:'sin',floor:'ifl',hx2:'cube',nhx2:'ncube',sqrt:'p32',nsqrt:'np32'},
-  inv:{const:'const',x:'x',nx:'nx',hx:'dbl',sin:'asin',cos:'acos',floor:'floor',hx2:'s2x',nhx2:'ns2x',sqrt:'x2',nsqrt:'nx2'},
+  diff:{const:'const',x:'const',nx:'const',hx:'const',dbl:'const',ndbl:'const',sin:'cos',cos:'nsin',floor:'const',hx2:'x',nhx2:'nx',sqrt:'rs',nsqrt:'nrs',
+    exp:'exp',log:'recip',recip:'nrecip2',abssin:'dabs',saw:'const',sgn:'const',semi:'nx',tan:'sec2',xsin:'dxsin',sinsq:'dsinsq',damp:'ddamp'},
+  int:{const:'const',x:'hx2',nx:'nhx2',hx:'qx2',dbl:'x2',ndbl:'nx2',sin:'ncos',cos:'sin',floor:'ifl',hx2:'cube',nhx2:'ncube',sqrt:'p32',nsqrt:'np32',
+    exp:'exp',log:'xlogx',recip:'log',abssin:'iabs',saw:'isaw',sgn:'tri',semi:'isemi',tan:'lncos',xsin:'ixsin',sinsq:'isinsq',damp:'idamp'},
+  inv:{const:'const',x:'x',nx:'nx',hx:'dbl',dbl:'hx',ndbl:'nhx',sin:'asin',cos:'acos',floor:'floor',hx2:'s2x',nhx2:'ns2x',sqrt:'x2',nsqrt:'nx2',
+    exp:'log',log:'exp',recip:'recip',abssin:'asin',saw:'x',sgn:'sgn',semi:'semi',tan:'atan',xsin:'asin',sinsq:'sqrt',damp:'asin'},
 };
 
 // ---------- items (10 s effects) ----------
@@ -276,7 +319,6 @@ const ITEMS={
   invinc:{nm:'無敵',cat:'buff',sym:'✶',d:'ゲートをすり抜ける。床に着いたら水平に滑る'},
   cd0:{nm:'クールダウン0秒',cat:'buff',sym:'∞',d:'カードの切り替えが<b>使い放題</b>'},
   slow:{nm:'時間の遅れ',cat:'buff',sym:'⧗',d:'スピードが<b>半分</b>になる'},
-  preview:{nm:'予告線表示',cat:'buff',sym:'⟶',d:'切り替えたらどう進むかの<b>予告線</b>が見える'},
   diff:{nm:'微分',cat:'change',sym:'d/d<i>x</i>',d:'全カードが<b>導関数</b>に化ける<br>sin → cos、½x² → x など',grp:'form'},
   int:{nm:'積分',cat:'change',sym:'∫',d:'全カードが<b>原始関数</b>に化ける<br>x → ½x²、cos → sin など',grp:'form'},
   narrow:{nm:'視界縮小',cat:'debuff',sym:'⤡',d:'見える範囲が<b>面積¼</b>（相似比½）に縮む',grp:'view'},
@@ -294,11 +336,11 @@ const LIN={1:'x','-1':'−x','0.5':'½x','-0.5':'−½x',2:'2x','-2':'−2x'};
 function formula(id,x0,y0,xNow){
   const D=DEFS[id];
   if(xNow!==undefined){ // past the domain end the curve runs flat: show the constant it settles at
-    const u=xNow-x0,lim={asin:[1,Math.PI/2],nasin:[1,-Math.PI/2],acos:[2,Math.PI],nacos:[2,-Math.PI]}[id];
+    const u=xNow-x0,lim={asin:[1,Math.PI/2],nasin:[1,-Math.PI/2],acos:[2,Math.PI],nacos:[2,-Math.PI],semi:[2,0],neg_semi:[2,0]}[id];
     if(lim&&u>lim[0])return `y = ${r1(y0+lim[1]).toFixed(1)}`;
   }
   if(D.lin!==undefined){if(D.lin===0)return `y = ${r1(y0).toFixed(1)}`;return `y = ${LIN[D.lin]}${plus(y0-D.lin*x0)}`}
-  return `y = ${D.ex(shift(x0))}${plus(y0+D.c0)}`;
+  return `y = ${D.ex(shift(x0+(D.sh||0)))}${plus(y0+D.c0)}`;
 }
 const mathH=s=>s.replace(/([xy])/g,'<i>$1</i>');
 
@@ -308,7 +350,7 @@ const SCALE=[0,2,4,5,7,9,11,12,14,16,17,19,21,23,24]; // C4 → C6
 function ensureAudio(){if(!AC){try{AC=new (window.AudioContext||window.webkitAudioContext)()}catch(e){}}if(AC&&AC.state==='suspended')AC.resume()}
 function note(idx){
   if(!soundOn||!AC)return;
-  const f=261.63*Math.pow(2,SCALE[idx]/12),t=AC.currentTime;
+  const f=523.25*Math.pow(2,SCALE[idx]/12),t=AC.currentTime;
   const out=AC.createGain();out.gain.setValueAtTime(0.0001,t);out.gain.exponentialRampToValueAtTime(0.32,t+0.006);out.gain.exponentialRampToValueAtTime(0.0001,t+1.3);
   const lp=AC.createBiquadFilter();lp.type='lowpass';lp.frequency.setValueAtTime(f*8,t);lp.frequency.exponentialRampToValueAtTime(f*2,t+0.6);
   out.connect(lp);lp.connect(AC.destination);
@@ -350,7 +392,7 @@ const sfxGacha=()=>{tone('sine',1318.5,1318.5,0.25,0.14);tone('sine',1975.5,1975
 
 // ---------- state ----------
 let G=null,raf=0,last=0,alive=false;
-let best=0;try{best=+localStorage.getItem('fnrun-best')||0}catch(e){}
+let best=0;try{best=+localStorage.getItem('mpr-best-v2')||0}catch(e){}
 
 function freshState(){
   return {x:0,y:0,act:{id:'const',slot:0,x0:0,y0:0},
@@ -489,8 +531,8 @@ function releaseActive(){
   const prev=G.act.slot;
   if(prev>0&&G.hand[prev]&&!has('cd0')){const len=baseCd(G.hand[prev])*cdScale();G.cd[prev]=len;G.cdMax[prev]=len||1}
 }
-const CD={const:0,x:2.0,nx:2.0,hx:1.6,sin:3.0,cos:3.0,floor:3.0,hx2:3.0,nhx2:3.0,sqrt:2.5,nsqrt:2.5};
-const baseCd=id=>CD[id]??2.5;
+const CD={const:0,x:1.2,nx:1.2,hx:1.0,dbl:1.2,ndbl:1.2,sin:1.8,cos:1.8,floor:1.8,abssin:1.8,saw:1.8,semi:1.8,recip:1.5,log:1.5,hx2:1.8,nhx2:1.8,sqrt:1.5,nsqrt:1.5,exp:1.8,damp:1.8,sgn:1.8,tan:2.0,xsin:1.8,sinsq:1.8};
+const baseCd=id=>CD[id]??1.8;
 function play(slot){
   const id=G.hand[slot];
   if(!alive||G.dead||G.paused||!id||G.cd[slot]>0)return;
@@ -554,11 +596,11 @@ function gacha(){
         body=`<div class="swap-head">空き枠に追加したわ</div><div class="gacts"><button class="btn" id="gGo">すぐ再開</button></div>`;
       }else{
         body=`<div class="swap-head">どのカードと入れ替える？</div>
-          <div class="swap">${[1,2,3,4].map(s=>{const h=DEFS[G.hand[s]];return `<button data-s="${s}" style="--c:${h.col}">${h.nm}<small>${G.act.slot===s?'使用中':'入れ替え'}</small></button>`}).join('')}</div>
+          <div class="swap">${[1,2,3,4].map(s=>{const h=DEFS[G.hand[s]];return `<button data-s="${s}" style="--c:${h.col}">${fullNm(G.hand[s])}<small>${G.act.slot===s?'使用中':'入れ替え'}</small></button>`}).join('')}</div>
           <div class="gacts"><button class="btn ghost" id="gGo">拾ったカードを捨てて再開</button></div>`;
       }
       rv.innerHTML=`<div class="rar">${RAR[POOL[id]].name}</div>
-        <div class="gcard" style="--c:${D.col}"><div class="gn">${D.nm}</div>${miniPlot(id)}<div class="gd">${D.d}</div></div>
+        <div class="gcard" style="--c:${D.col}"><div class="gn">${fullNm(id)}</div>${miniPlot(id)}<div class="gd">${D.d}</div></div>
         ${body}<div class="count" id="gCount">あと<b>5</b>秒で再開</div>`;
       ov.appendChild(rv);
       rv.querySelectorAll('.swap button').forEach(b=>b.onclick=()=>{
@@ -595,11 +637,11 @@ function resume(){
 function die(why){
   G.dead=true;G.flash=1;alive=false;sfxDeath();stopBgm();
   const score=Math.floor(G.x*10)/10;
-  let nb=false;if(score>best){best=score;nb=true;try{localStorage.setItem('fnrun-best',String(best))}catch(e){}}
+  let nb=false;if(score>best){best=score;nb=true;try{localStorage.setItem('mpr-best-v2',String(best))}catch(e){}}
   updateUI(true);
   setTimeout(()=>{
     G.path.push([G.x,G.y]);
-    const hand=G.hand.filter(Boolean).map(k=>DEFS[k].nm.replace(/<\/?i>/g,'')).join(' / ');
+    const hand=G.hand.filter(Boolean).map(k=>fullNm(k).replace(/<[^>]+>/g,'')).join(' / ');
     const share=`動点Pは x = ${score.toFixed(1)} まで進んだ。\n手札 ${hand}\n#MovingPointRun`;
     const thumb=makeThumb(score,why);
     $('ov').className='overlay';
@@ -608,7 +650,7 @@ function die(why){
       <div class="big"><i>x</i> = ${score.toFixed(1)}</div>
       <div class="sub">${nb?'自己ベスト更新！ ':''}ベスト <i>x</i> = ${best.toFixed(1)}</div>
       <div class="sub" style="color:var(--ink)">最後の式　${mathH(formula(G.act.id,G.act.x0,G.act.y0,G.x))}</div>
-      <div class="sub">最終手札　${G.hand.filter(Boolean).map(k=>DEFS[k].nm).join('　')}</div>
+      <div class="sub">最終手札　${G.hand.filter(Boolean).map(k=>fullNm(k)).join('　')}</div>
       ${thumb?`<img class="thumb" src="${thumb}" alt="x = ${score.toFixed(1)} までの軌跡">
       <div class="sub">画像を長押しで保存して、投稿に添付してね</div>`:''}
       <a class="btn tw" href="https://twitter.com/intent/tweet?text=${encodeURIComponent(share)}&url=${encodeURIComponent('https://cceight.github.io/moving-point-run/')}" target="_blank" rel="noopener">ツイッターに投稿する</a>
@@ -685,7 +727,7 @@ function buildCards(){
     if(!id)return `<button class="card empty" data-i="${i}" disabled>空き枠</button>`;
     const E2=eff(id),D=DEFS[E2];
     const changed=E2!==id&&i>0;
-    return `<button class="card${i===0?' fixed':''}${i===0&&has('noconst')?' banned':''}" data-i="${i}" style="--c:${D.col}"><span class="nm${i===0?' small':''}">${D.nm}</span><span class="fx" id="fx${i}"></span>${changed&&tag?`<span class="tag">${tag}</span>`:''}<span class="cd" id="cd${i}"></span><span class="cdn" id="cdn${i}"></span></button>`;
+    return `<button class="card${i===0?' fixed':''}${i===0&&has('noconst')?' banned':''}" data-i="${i}" style="--c:${D.col}"><span class="nm">${fullNm(E2)}</span><span class="fx" id="fx${i}"></span>${changed&&tag?`<span class="tag">${tag}</span>`:''}<span class="cd" id="cd${i}"></span><span class="cdn" id="cdn${i}"></span></button>`;
   }).join('');
   $('cards').querySelectorAll('.card:not(.empty)').forEach(b=>b.addEventListener('pointerdown',e=>{e.preventDefault();play(+b.dataset.i)}));
 }
@@ -771,7 +813,7 @@ function draw(now){
     ctx.fillText('？',px,py+1);ctx.textAlign='start';ctx.textBaseline='alphabetic';
   }
   // previews
-  if(!G.dead&&has('preview')){
+  if(!G.dead){
     const k=1;
     G.hand.forEach((id,i)=>{
       if(!id||G.cd[i]>0||i===G.act.slot||(i===0&&has('noconst')))return;
@@ -841,6 +883,7 @@ const SCRIPT=[
   ['doya','run','まず主役はこの点、動点Pね。原点Oから勝手に右へ走り続けるの。止まることはできないわよ。休まず進む西から東、ってやつね。'],
   ['normal','run','点が描いている線は、今セットされている関数のグラフそのもの。最初は <i>y</i> = const、つまり今の高さのまま真っすぐ水平に進むってわけ。'],
   ['smile','switch','下のカードをタップすると、関数が切り替わるわ。大事なのは、今いる場所からその形が始まること。線は途切れずに、ちゃんとつながるの。'],
+  ['normal','switch','薄い線は、今選んだらこう進むっていう予告線よ。'],
   ['normal','formula','だからカードの式は、走っている間ずっと書き換わってるでしょ？「今選んだらこの式になる」っていう、平行移動した式をリアルタイムで見せてるのよ。'],
   ['doya','formula','平行移動の感覚なんて、遊んでるうちに勝手に身につくわ。お得でしょ？'],
   ['normal','cooldown','次はクールダウン。別のカードに切り替えた瞬間、手放したカードは灰色になって、時計回りに少しずつ戻ってくるわ。'],
@@ -852,7 +895,7 @@ const SCRIPT=[
   ['normal','box','コースには、ときどきオレンジの「？」箱が浮いてるわ。触れると時間が止まって、ガチャが始まるの。<br>ガチャ好きでしょ？'],
   ['doya','box','出てくるのは新しい関数カードか、10秒間のバフ・デバフ。カードはノーマル、レア、エピックの3段階よ。私とガチャとケルベロス、どれが一番好きなのよ！'],
   ['normal','hand','手札は <i>y</i> = const の固定枠と、あと4枚まで。満杯の時に引いたら、5秒以内に入れ替える相手を選んでね。選ばなかったら、引いたカードは捨てられちゃうわ。'],
-  ['smile','items','バフは緑、変化系は紫、デバフは赤で光るわ。予告線が見える「予告線表示」とか、ゲートをすり抜ける「無敵」とか、嬉しいのもたくさんあるわよ。'],
+  ['smile','items','バフは緑、変化系は紫、デバフは赤で光るわ。時間がゆっくりになる「時間の遅れ」とか、ゲートをすり抜ける「無敵」とか、嬉しいのもたくさんあるわよ。'],
   ['surprise','items','でも「符号反転」なんか引いたら、上がるはずのカードが全部下がるようになるの。めくった瞬間の「げっ」を楽しみなさい。'],
   ['doya','items','変化系の「微分」と「積分」は、手札のカードが本当に導関数や原始関数に化けるわ。<br>sin を微分したら cos、ね？数学って面白いでしょ。'],
   ['normal','speed','それから、30秒ごとにスピードアップするわ。そのぶんクールダウンも短くなるから、手数で勝負よ。'],
@@ -916,6 +959,7 @@ function tutLoop(now){
     runPath(f,6.5,'transparent');
     const qx=Math.min(6.5,(t*1.8)%8),qy=f(qx);
     const cur=qx<3?'const':'x';
+    if(qx<3){[['x',1],['nx',-1]].forEach(([id,k])=>{c.strokeStyle=DEFS[id].col;c.globalAlpha=0.4;c.lineWidth=1.5;c.beginPath();c.moveTo(X(qx),Y(qy));c.lineTo(X(qx+2.4),Y(qy+k*2.4));c.stroke();c.globalAlpha=1})}
     c.fillStyle=DEFS[cur].col;c.beginPath();c.arc(X(qx),Y(qy),7,0,Math.PI*2);c.fill();
     if(D==='switch')label(qx<3?'y = const で水平に進む':'x のカードを選んだ！',X(qx)+12,Y(qy)-14,DEFS[cur].col,16);
     // mini hand
@@ -927,7 +971,7 @@ function tutLoop(now){
       c.strokeStyle=act?DEFS[id].col:COL.line;c.lineWidth=act?2:1;c.strokeRect(x0,y0+dy,w,h);
       const hot=D==='formula'&&id==='x';
       if(hot){c.fillStyle=COL.accent+'26';c.fillRect(x0,y0+dy,w,h);c.strokeStyle=COL.accent;c.lineWidth=2.5;c.strokeRect(x0,y0+dy,w,h)}
-      label(id==='const'?'y = const':DEFS[id].nm.replace(/<\/?i>/g,''),x0+w/2,y0+dy+(D==='formula'?20:h/2+6),DEFS[id].col,D==='formula'?15:18,'center');
+      label(fullNm(id).replace(/<[^>]+>/g,''),x0+w/2,y0+dy+(D==='formula'?20:h/2+6),DEFS[id].col,D==='formula'?15:17,'center');
       if(D==='formula')label(formula(id,qx,qy),x0+w/2,y0+dy+h-12,hot?COL.ink:COL.dim,hot?Math.min(16,w/8.5):Math.min(12,w/12),'center');
       if(hot)label('▼ ここが書き換わる',x0+w/2,y0-10,COL.accent,14,'center');
       if(pressed&&id==='x'){c.strokeStyle=DEFS.x.col;c.globalAlpha=1-(qx-3)/0.5;c.lineWidth=3;c.strokeRect(x0-4,y0+dy-4,w+8,h+8);c.globalAlpha=1;label('タップ！',x0+w/2,y0-10,DEFS.x.col,15,'center')}
@@ -940,7 +984,7 @@ function tutLoop(now){
       const x0=20+i*(w+8);
       c.strokeStyle=COL.line;c.lineWidth=1;c.setLineDash(id?[]:[4,4]);c.strokeRect(x0,y0,w,h);c.setLineDash([]);
       if(!id){label('空き枠',x0+w/2,y0+h/2,COL.line,13,'center');return}
-      label(DEFS[id].nm.replace(/<\/?i>/g,'').replace('y = const','const'),x0+w/2,y0+h/2+6,DEFS[id].col,18,'center');
+      label(fullNm(id).replace(/<[^>]+>/g,'').replace('y = const','const'),x0+w/2,y0+h/2+6,DEFS[id].col,Math.min(15,w/5.2),'center');
       if(D==='cooldown'&&i===2){
         const p=(t%3)/3;
         c.fillStyle='rgba(29,29,34,.42)';c.beginPath();c.moveTo(x0+w/2,y0+h/2);
@@ -981,7 +1025,7 @@ function tutLoop(now){
     else label('ガチャ！',X(5),Y(3.2),COL.accent,26,'center');
   }
   else if(D==='items'){
-    const rows=[['予告線表示',CAT.buff.col],['微分',CAT.change.col],['符号反転',CAT.debuff.col]];
+    const rows=[['時間の遅れ',CAT.buff.col],['微分',CAT.change.col],['符号反転',CAT.debuff.col]];
     rows.forEach(([nm,col],i)=>{
       const y=TH/2-70+i*52,w=TW-40,rem=1-((t/5+i*0.2)%1);
       c.fillStyle=col+'2e';c.fillRect(20,y,w*rem,40);c.strokeStyle=col;c.lineWidth=2;c.strokeRect(20,y,w,40);
