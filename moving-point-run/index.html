@@ -92,7 +92,7 @@ canvas{display:block;width:100%;height:100%}
 @keyframes su{0%{opacity:0;transform:scale(1.4)}15%{opacity:1;transform:scale(1)}75%{opacity:1}100%{opacity:0;transform:translateY(-12px)}}
 
 .cards{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
-.card{position:relative;overflow:hidden;background:var(--panel);border:1px solid var(--line);border-radius:3px;padding:8px 3px 7px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;height:96px;box-sizing:border-box;min-width:0}
+.card{position:relative;overflow:hidden;background:var(--panel);border:1px solid var(--line);border-radius:3px;padding:8px 3px 7px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;height:120px;box-sizing:border-box;min-width:0}
 .card .nm{font-family:var(--f-num);font-weight:600;font-size:clamp(12px,3.6vw,17px);line-height:1.15;color:var(--c);position:relative;z-index:1;text-align:center;max-width:100%;overflow-wrap:anywhere}
 .card .nm sup{font-size:.7em}
 .card .nm.small{font-size:clamp(11px,3.4vw,14px)}
@@ -131,6 +131,23 @@ details.howto b{color:var(--ink)}
 .modeBtn{position:absolute;top:12px;right:max(16px,env(safe-area-inset-right,0px));font-size:12px;padding:6px 10px;border-radius:3px;letter-spacing:.05em;font-family:var(--f-body);font-weight:700}
 .modeBtn.to-board{background:#1f3b33;color:#eef0e6;border:1px solid #1f3b33}
 .modeBtn.to-note{background:#ffffff;color:#1d1d22;border:1px solid #d5dae3}
+.dex-head{display:flex;justify-content:space-between;align-items:baseline}
+.dex-head .h2{text-align:left}
+.overlay.dex{justify-content:flex-start}
+.overlay.dex>*{flex:0 0 auto}
+.dex-grid{display:grid;grid-template-columns:repeat(3,1fr);grid-auto-rows:min-content;gap:8px}
+.dex-cell{border:1px solid var(--line);border-radius:3px;padding:10px 4px;min-height:58px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;background:var(--panel);font-family:var(--f-num);font-weight:600;font-size:13px;color:var(--c);text-align:center;line-height:1.2}
+.dex-cell small{font-size:9px;letter-spacing:.2em;color:var(--dim);font-weight:400}
+.dex-cell.unk{color:var(--dim);background:transparent;border-style:dashed}
+.dex-cell.sel{border-color:var(--c);box-shadow:inset 0 0 0 1px var(--c)}
+.dex-card{border:2px solid var(--c);border-radius:4px;padding:12px;display:grid;grid-template-columns:120px 1fr;gap:12px;align-items:center;background:var(--paper)}
+.dex-card svg{width:100%;height:auto}
+.dex-card .dn{font-family:var(--f-num);font-weight:600;font-size:20px;color:var(--c);line-height:1.2}
+.dex-card .dr{font-size:10px;letter-spacing:.3em;color:var(--dim);margin:2px 0 6px}
+.dex-card .dt{font-size:13px;line-height:1.75;color:var(--ink)}
+@media (max-width:360px){.dex-card{grid-template-columns:1fr}}
+.minirow{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.btn.mini{font-size:13px;padding:9px 6px;letter-spacing:.02em}
 .thumb{width:100%;border:1px solid var(--line);border-radius:3px;display:block}
 .tw{display:block;text-align:center;text-decoration:none}
 .title-sub{text-align:center;font-family:var(--f-num);font-size:13px;color:var(--dim);letter-spacing:.3em;margin-top:-6px}
@@ -237,8 +254,8 @@ const DEFS={
   nsin:E('−sin <i>x</i>',u=>-Math.sin(u),s=>`−sin(${s})`,0,'#9a6fd6','下から始まる波'),
   cos:E('cos <i>x</i>',u=>Math.cos(u)-1,s=>`cos(${s})`,-1,'#c2418f','平らに始まり、下から入る波'),
   ncos:E('−cos <i>x</i>',u=>1-Math.cos(u),s=>`−cos(${s})`,1,'#d0609f','平らに始まり、上から入る波'),
-  floor:E('⌊<i>x</i>⌋',u=>Math.floor(u),s=>`⌊${s}⌋`,0,'#11808f','1進むごとにカクッと上がる階段'),
-  nfloor:E('−⌊<i>x</i>⌋',u=>-Math.floor(u),s=>`−⌊${s}⌋`,0,'#3a8f9a','1進むごとにカクッと下がる階段'),
+  floor:E('2⌊<i>x</i>⌋',u=>2*Math.floor(u),s=>`2⌊${s}⌋`,0,'#11808f','1進むごとに2段ずつカクッと上がる大階段'),
+  nfloor:E('−2⌊<i>x</i>⌋',u=>-2*Math.floor(u),s=>`−2⌊${s}⌋`,0,'#3a8f9a','1進むごとに2段ずつカクッと下がる大階段'),
   hx2:E('½<i>x</i>²',u=>u*u/2,s=>`½${par(s)}²`,0,'#d98a00','じわっと上がって急上昇'),
   nhx2:E('−½<i>x</i>²',u=>-u*u/2,s=>`−½${par(s)}²`,0,'#b5651d','じわっと下がって急降下'),
   qx2:E('¼<i>x</i>²',u=>u*u/4,s=>`¼${par(s)}²`,0,'#e0a030',''),
@@ -255,8 +272,8 @@ const DEFS={
   np32:E('−⅔<i>x</i>³ᐟ²',u=>-2/3*Math.pow(Math.max(0,u),1.5),s=>`−⅔${par(s)}³ᐟ²`,0,'#5a6fc5',''),
   rs:E('1/(2√<i>x</i>)',u=>1/(2*Math.sqrt(u+.25))-1,s=>`1/(2√(${s} + 0.25))`,-1,'#5f9f4f',''),
   nrs:E('−1/(2√<i>x</i>)',u=>1-1/(2*Math.sqrt(u+.25)),s=>`−1/(2√(${s} + 0.25))`,1,'#6a7fc5',''),
-  ifl:E('∫⌊<i>x</i>⌋',iflo,s=>`∫⌊${s}⌋`,0,'#21909f',''),
-  nifl:E('−∫⌊<i>x</i>⌋',u=>-iflo(u),s=>`−∫⌊${s}⌋`,0,'#4a9faa',''),
+  ifl:E('2∫⌊<i>x</i>⌋',u=>2*iflo(u),s=>`2∫⌊${s}⌋`,0,'#21909f',''),
+  nifl:E('−2∫⌊<i>x</i>⌋',u=>-2*iflo(u),s=>`−2∫⌊${s}⌋`,0,'#4a9faa',''),
   asin:E('arcsin <i>x</i>',u=>Math.asin(Math.min(1,u)),s=>`arcsin(${s})`,0,'#8a5fe6',''),
   nasin:E('−arcsin <i>x</i>',u=>-Math.asin(Math.min(1,u)),s=>`−arcsin(${s})`,0,'#aa7fe6',''),
   acos:E('arccos(1−<i>x</i>)',u=>Math.acos(Math.max(-1,1-u)),s=>`arccos(1 − ${par(s)})`,0,'#d2519f',''),
@@ -270,8 +287,8 @@ const DEFS={
   xsin:E('<i>x</i> sin <i>x</i>',u=>u*Math.sin(u),s=>`${par(s)} sin(${s})`,0,'#a93226','振れ幅がどんどん大きくなる波'),
   sinsq:E('sin <i>x</i>²',u=>Math.sin(u*u),s=>`sin(${par(s)}²)`,0,'#6c3483','波がどんどん細かくなる'),
   damp:E('e<sup>−<i>x</i></sup> sin <i>x</i>',u=>Math.exp(-u)*Math.sin(u),s=>s==='x'?'e⁻ˣ sin x':`e^−${par(s)} sin(${s})`,0,'#1f618d','バネみたいにビヨンと揺れて落ち着く'),
-  saw:E('<i>x</i> − ⌊<i>x</i>⌋',u=>u-Math.floor(u),s=>`${s} − ⌊${s}⌋`,0,'#117a65','上がってはストンと落ちるのこぎり'),
-  sgn:E('sgn(sin <i>x</i>)',u=>u<=0?0:Math.sign(Math.sin(u)),s=>`sgn(sin(${s}))`,0,'#b03a2e','上下にカクッと瞬間移動を繰り返す'),
+  saw:E('2(<i>x</i> − ⌊<i>x</i>⌋)',u=>2*(u-Math.floor(u)),s=>`2(${s} − ⌊${s}⌋)`,0,'#117a65','上がってはストンと落ちるのこぎり'),
+  sgn:E('2sgn(sin <i>x</i>)',u=>u<=0?0:2*Math.sign(Math.sin(u)),s=>`2sgn(sin(${s}))`,0,'#b03a2e','上下にカクッと瞬間移動を繰り返す'),
   semi:{...E('√(1 − <i>x</i>²)',u=>u>=2?0:sq(1-(u-1)*(u-1)),s=>`√(1 − ${par(s)}²)`,0,'#2874a6','半円をなぞって一山越える'),sh:1},
   recip:{...E('1/<i>x</i>',u=>1/(u+1)-1,s=>`1/${par(s)}`,-1,'#7d6608','最初だけ急降下して、すぐ寝そべる'),sh:-1},
   // derivative / antiderivative / inverse targets for the added functions
@@ -279,8 +296,8 @@ const DEFS={
   nrecip2:{...E('−1/<i>x</i>²',u=>1-1/((u+1)*(u+1)),s=>`−1/${par(s)}²`,1,'#9a7d0a',''),sh:-1},
   dabs:E('cos <i>x</i>·sgn(sin <i>x</i>)',u=>u<=0?0:Math.cos(u)*Math.sign(Math.sin(u))-1,s=>`cos(${s})·sgn(sin(${s}))`,-1,'#9b59b6',''),
   iabs:E('∫|sin <i>x</i>|',u=>2*Math.floor(u/Math.PI)+1-Math.cos(u-Math.PI*Math.floor(u/Math.PI)),s=>`∫|sin(${s})|`,0,'#7d3c98',''),
-  isaw:E('∫(<i>x</i> − ⌊<i>x</i>⌋)',u=>{const n=Math.floor(u),f=u-n;return n/2+f*f/2},s=>`∫(${s} − ⌊${s}⌋)`,0,'#0e6655',''),
-  tri:E('∫sgn(sin <i>x</i>)',u=>{const m=u-2*Math.PI*Math.floor(u/(2*Math.PI));return m<Math.PI?m:2*Math.PI-m},s=>`∫sgn(sin(${s}))`,0,'#cb4335',''),
+  isaw:E('2∫(<i>x</i> − ⌊<i>x</i>⌋)',u=>{const n=Math.floor(u),f=u-n;return n+f*f},s=>`2∫(${s} − ⌊${s}⌋)`,0,'#0e6655',''),
+  tri:E('2∫sgn(sin <i>x</i>)',u=>{const m=u-2*Math.PI*Math.floor(u/(2*Math.PI));return 2*(m<Math.PI?m:2*Math.PI-m)},s=>`2∫sgn(sin(${s}))`,0,'#cb4335',''),
   isemi:{...E('∫√(1 − <i>x</i>²)',u=>{const t=Math.min(u,2)-1;return (t*sq(1-t*t)+Math.asin(Math.max(-1,Math.min(1,t))))/2+Math.PI/4},s=>`∫√(1 − ${par(s)}²)`,0,'#1a5276',''),sh:1},
   sec2:E('1/cos²<i>x</i>',u=>Math.min(1e4,1/(Math.cos(u)**2))-1,s=>`1/cos²(${s})`,-1,'#e67e22',''),
   lncos:E('−log|cos <i>x</i>|',u=>Math.min(1e4,-Math.log(Math.abs(Math.cos(u))+1e-12)),s=>`−log|cos(${s})|`,0,'#ba4a00',''),
@@ -309,19 +326,19 @@ const FORM={
   int:{const:'const',x:'hx2',nx:'nhx2',hx:'qx2',dbl:'x2',ndbl:'nx2',sin:'ncos',cos:'sin',floor:'ifl',hx2:'cube',nhx2:'ncube',sqrt:'p32',nsqrt:'np32',
     exp:'exp',log:'xlogx',recip:'log',abssin:'iabs',saw:'isaw',sgn:'tri',semi:'isemi',tan:'lncos',xsin:'ixsin',sinsq:'isinsq',damp:'idamp'},
   inv:{const:'const',x:'x',nx:'nx',hx:'dbl',dbl:'hx',ndbl:'nhx',sin:'asin',cos:'acos',floor:'floor',hx2:'s2x',nhx2:'ns2x',sqrt:'x2',nsqrt:'nx2',
-    exp:'log',log:'exp',recip:'recip',abssin:'asin',saw:'x',sgn:'sgn',semi:'semi',tan:'atan',xsin:'asin',sinsq:'sqrt',damp:'asin'},
+    exp:'log',log:'exp',recip:'recip',abssin:'asin',saw:'hx',sgn:'sgn',semi:'semi',tan:'atan',xsin:'asin',sinsq:'sqrt',damp:'asin'},
 };
 
 // ---------- items (10 s effects) ----------
 const DUR=10;
 const ITEMS={
-  wide:{nm:'視界4倍',cat:'buff',sym:'⤢',d:'見える範囲が<b>面積4倍</b>（相似比2倍）に広がる',grp:'view'},
+  wide:{nm:'視界2倍',cat:'buff',sym:'⤢',d:'見える範囲が<b>面積2倍</b>（相似比√2倍）に広がる',grp:'view'},
   invinc:{nm:'無敵',cat:'buff',sym:'✶',d:'ゲートをすり抜ける。床に着いたら水平に滑る'},
   cd0:{nm:'クールダウン0秒',cat:'buff',sym:'∞',d:'カードの切り替えが<b>使い放題</b>'},
   slow:{nm:'時間の遅れ',cat:'buff',sym:'⧗',d:'スピードが<b>半分</b>になる'},
   diff:{nm:'微分',cat:'change',sym:'d/d<i>x</i>',d:'全カードが<b>導関数</b>に化ける<br>sin → cos、½x² → x など',grp:'form'},
   int:{nm:'積分',cat:'change',sym:'∫',d:'全カードが<b>原始関数</b>に化ける<br>x → ½x²、cos → sin など',grp:'form'},
-  narrow:{nm:'視界縮小',cat:'debuff',sym:'⤡',d:'見える範囲が<b>面積¼</b>（相似比½）に縮む',grp:'view'},
+  narrow:{nm:'視界半分',cat:'debuff',sym:'⤡',d:'見える範囲が<b>面積½</b>（相似比1/√2）に縮む',grp:'view'},
   neg:{nm:'符号反転',cat:'debuff',sym:'−1',d:'全カードに<b>−1</b>が掛かる'},
   inv:{nm:'逆関数化',cat:'debuff',sym:'<i>f</i>⁻¹',d:'全カードが<b>逆関数</b>に化ける<br>√x → x²、½x → 2x など',grp:'form'},
   noconst:{nm:'定数禁止',cat:'debuff',sym:'≠',d:'<i>y</i> = const が<b>使えない</b>'},
@@ -359,7 +376,7 @@ function note(idx){
   });
 }
 function setSnd(){['sndBtn','tSnd'].forEach(id=>{const b=$(id);if(!b)return;b.textContent=soundOn?'音 ON':'音 OFF';b.classList.toggle('on',soundOn)})}
-const toggleSnd=()=>{soundOn=!soundOn;try{localStorage.setItem('fnrun-snd',soundOn?'1':'0')}catch(e){}if(soundOn)ensureAudio();setSnd();syncBgm()};
+const toggleSnd=()=>{soundOn=!soundOn;try{localStorage.setItem('fnrun-snd',soundOn?'1':'0')}catch(e){}if(soundOn)ensureAudio();setSnd();if(G&&G.dead&&!alive){soundOn?startSad():stopSad()}else syncBgm()};
 $('sndBtn').onclick=toggleSnd;
 // ---- sound effects ----
 function tone(type,f0,f1,dur,vol,delay=0){
@@ -386,6 +403,48 @@ const FANFARE={
 const bgm=new Audio('bgm.mp3');bgm.loop=true;bgm.volume=0.15;bgm.preload='auto';
 const syncBgm=()=>{if(soundOn)bgm.play().catch(()=>{});else bgm.pause()};
 const stopBgm=()=>{bgm.pause();try{bgm.currentTime=0}catch(e){}};
+// noise burst helper (wall breaking)
+let NOISE=null;
+function noise(t0,dur,freq,q,vol){
+  if(!soundOn||!AC)return;
+  if(!NOISE){NOISE=AC.createBuffer(1,AC.sampleRate*0.5,AC.sampleRate);const d=NOISE.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1}
+  const src=AC.createBufferSource(),bp=AC.createBiquadFilter(),g=AC.createGain(),t=AC.currentTime+t0;
+  src.buffer=NOISE;bp.type='bandpass';bp.frequency.value=freq;bp.Q.value=q;
+  g.gain.setValueAtTime(vol,t);g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+  src.connect(bp);bp.connect(g);g.connect(AC.destination);src.start(t);src.stop(t+dur+0.02);
+}
+let lastBreak=0;
+const sfxBreak=()=>{const n=performance.now();if(n-lastBreak<70)return;lastBreak=n;
+  noise(0,0.09,1800,1.2,0.5);noise(0,0.18,600,2,0.35);tone('square',220,90,0.06,0.08);
+  for(let k=0;k<6;k++)noise(0.06+Math.random()*0.3,0.03,3000+Math.random()*3000,4,0.12)};
+// sad loop on the result screen: soft broken chords Am – F – Dm – E, descending
+let sadTimer=0,sadOn=false;
+const SAD=[[-3,0,4],[-7,-3,0],[-10,-7,-3],[-8,-4,-1]];
+function playSadBar(i){
+  if(!sadOn)return;
+  SAD[i%4].slice().reverse().forEach((n,k)=>pianoAt(261.63*Math.pow(2,(n+12)/12),k*0.42,0.09));
+  pianoAt(261.63*Math.pow(2,(SAD[i%4][0]-12)/12),0,0.07);
+  sadTimer=setTimeout(()=>playSadBar(i+1),1700);
+}
+function startSad(){if(!soundOn||!AC||sadOn)return;sadOn=true;playSadBar(0)}
+function stopSad(){sadOn=false;clearTimeout(sadTimer)}
+function pianoAt(f,delay,vol){
+  if(!soundOn||!AC)return;
+  const t=AC.currentTime+delay;
+  const out=AC.createGain();out.gain.setValueAtTime(0.0001,t);out.gain.exponentialRampToValueAtTime(vol,t+0.01);out.gain.exponentialRampToValueAtTime(0.0001,t+2.2);
+  const lp=AC.createBiquadFilter();lp.type='lowpass';lp.frequency.value=f*3;out.connect(lp);lp.connect(AC.destination);
+  [[1,'triangle',1],[2,'sine',.25]].forEach(([m,type,a])=>{const o=AC.createOscillator(),g=AC.createGain();o.type=type;o.frequency.value=f*m;g.gain.value=a;o.connect(g);g.connect(out);o.start(t);o.stop(t+2.3)});
+}
+// wall smash: debris + sound
+function smash(x,y){
+  sfxBreak();
+  for(let k=0;k<12;k++){const a=Math.random()*Math.PI*2,v=2+Math.random()*5;
+    G.debris.push({x,y,vx:Math.cos(a)*v+1.5,vy:Math.sin(a)*v+2,r:Math.random()*6,vr:(Math.random()-.5)*14,w:3+Math.random()*5,h:6+Math.random()*10,life:1})}
+}
+function stepDebris(dt){
+  for(const d of G.debris){d.vy-=18*dt;d.x+=d.vx*dt;d.y+=d.vy*dt;d.r+=d.vr*dt;d.life-=dt*0.8}
+  if(G.debris.some(d=>d.life<=0))G.debris=G.debris.filter(d=>d.life>0);
+}
 const sfxBlip=()=>tone('square',520+Math.random()*140,520,0.035,0.035);
 const sfxTap=()=>{tone('sine',880,1320,0.07,0.16)};
 const sfxGacha=()=>{tone('sine',1318.5,1318.5,0.25,0.14);tone('sine',1975.5,1975.5,0.4,0.12,0.09)};
@@ -397,11 +456,12 @@ let best=0;try{best=+localStorage.getItem('mpr-best-v2')||0}catch(e){}
 function freshState(){
   return {x:0,y:0,act:{id:'const',slot:0,x0:0,y0:0},
     hand:['const','x','nx',null,null],cd:[0,0,0,0,0],cdMax:[1,1,1,1,1],
-    trail:[[0,0]],path:[[0,0]],lastPathX:0,gates:[],items:[],fx:{},
+    trail:[[0,0]],path:[[0,0]],debris:[],lastPathX:0,gates:[],items:[],fx:{},
     gen:{x:6,c:1.8,mode:'sparse',left:3,tunnel:null,first:true,nextItem:16},
     dead:false,paused:false,flash:0,camB:-0.8,zoom:1,t:0,lv:0,lastPassX:-99,chain:0};
 }
 function newGame(){
+  stopSad();['const','x','nx'].forEach(addDex);
   ensureAudio();
   G=freshState();genAhead();
   alive=true;hideOv();last=performance.now();updateUI(true);
@@ -437,13 +497,16 @@ function genAhead(){
     }else{
       const base=Math.max(1.5,2.5-d*0.003);
       if(!g.tunnel){
-        const t=pickW([['flat',1],['line',1.2],['sine',.6],['cos',.6],['stairs',.8],['parab',.8],['step',.8]]);
+        const t=pickW([['flat',1],['line',1.2],['sine',.6],['cos',.6],['stairs',.5],['parab',.8],['step',.8],['bigstairs',.6],['square',.5],['sawtun',.6]]);
         const xs=g.x+rnd(2.4,3.2);
         const floorC=base/2+0.4;
         let c=g.c,dir=Math.random()<.5?1:-1,len,h=base;
         if(t==='line'){len=rnd(3,7);if(dir<0&&c-len<floorC){if(c-3<floorC)dir=1;else len=c-floorC}}
         else if(t==='sine'||t==='cos'){len=Math.PI*2*rnd(1,1.25);h=Math.max(1.9,2.6-d*0.003);c=Math.max(c,h/2+(t==='cos'?2.4:1.5))}
         else if(t==='stairs'){len=rnd(4,6);h=base+0.7}
+        else if(t==='bigstairs'){len=rnd(2.6,3.4);h=base+1.2}
+        else if(t==='square'){len=Math.PI*2;h=Math.max(4.6,base+2.1);c=Math.max(c,4.8)} // bands overlap around c, so a careful const also gets through
+        else if(t==='sawtun'){len=rnd(3,5);h=base+1.3;c=Math.max(c,h/2+0.5)}
         else if(t==='parab'){len=rnd(2.6,3.2);h=base+0.9;if(dir<0&&c-len*len/2<floorC+0.5)dir=1}
         else if(t==='step'){len=2.4;h=base+0.9;if(dir<0&&c-3.5<floorC)dir=1}
         else len=rnd(4,7);
@@ -456,7 +519,7 @@ function genAhead(){
         G.gates.push({x:T.xs+T.len,lo:Math.max(0,c2-h/2),hi:c2+h/2,tun:1});
         g.c=c2;g.x=T.xs+T.len;g.mode='sparse';g.left=2;continue;
       }
-      const st=T.t==='stairs'?0.5:0.62,u=T.i*st;
+      const st=T.t==='stairs'||T.t==='bigstairs'||T.t==='sawtun'?0.5:0.62,u=T.i*st;
       if(u>T.len){g.x=T.xs+T.len;g.mode='sparse';g.left=Math.random()<.5?2:3;continue}
       let c;
       switch(T.t){
@@ -465,6 +528,9 @@ function genAhead(){
         case 'sine':c=T.c+Math.sin(u);break;
         case 'cos':c=T.c+Math.cos(u)-1;break;
         case 'stairs':c=T.c+Math.floor(u);break;
+        case 'bigstairs':c=T.c+2*Math.floor(u);break;
+        case 'square':c=T.c+(u<=0?0:2*Math.sign(Math.sin(u)));break;
+        case 'sawtun':c=T.c+2*(u-Math.floor(u));break;
         case 'parab':c=T.c+T.dir*u*u/2;break;
       }
       G.gates.push({x:T.xs+u,lo:Math.max(0,c-h/2),hi:c+h/2,tun:1});
@@ -485,7 +551,8 @@ const cdScale=()=>Math.pow(0.9,G.lv);
 function loop(t){
   const dt=Math.min(0.05,(t-last)/1000);last=t;
   if(alive&&!G.dead&&!G.paused)step(dt);
-  if(G){const zt=has('wide')?2:has('narrow')?0.5:1;G.zoom+=(zt-G.zoom)*Math.min(1,dt*3)}
+  if(G){const zt=has('wide')?Math.SQRT2:has('narrow')?Math.SQRT1_2:1;G.zoom+=(zt-G.zoom)*Math.min(1,dt*1.4)}
+  if(G&&G.debris.length)stepDebris(dt);
   followCam(dt);
   if(G&&G.dead)G.flash=Math.max(0,G.flash-dt*2);
   draw(t);
@@ -501,8 +568,10 @@ function step(dt){
   for(const q of G.gates){
     if(q.x>G.x&&q.x<=nx&&!q.ok){
       const yy=yAt(q.x);
-      if((yy<q.lo-1e-6||yy>q.hi)&&!has('invinc')){G.x=q.x;G.y=yy;G.trail.push([G.x,G.y]);return die('gate')}
-      q.ok=1;passNote();
+      const outside=yy<q.lo-1e-6||yy>q.hi;
+      if(outside&&!has('invinc')){G.x=q.x;G.y=yy;G.trail.push([G.x,G.y]);return die('gate')}
+      q.ok=1;
+      if(outside){if(yy>q.hi)q.brokeTop=1;else q.brokeBot=1;smash(q.x,yy)}else passNote();
     }
   }
   let got=null;
@@ -531,8 +600,8 @@ function releaseActive(){
   const prev=G.act.slot;
   if(prev>0&&G.hand[prev]&&!has('cd0')){const len=baseCd(G.hand[prev])*cdScale();G.cd[prev]=len;G.cdMax[prev]=len||1}
 }
-const CD={const:0,x:1.2,nx:1.2,hx:1.0,dbl:1.2,ndbl:1.2,sin:1.8,cos:1.8,floor:1.8,abssin:1.8,saw:1.8,semi:1.8,recip:1.5,log:1.5,hx2:1.8,nhx2:1.8,sqrt:1.5,nsqrt:1.5,exp:1.8,damp:1.8,sgn:1.8,tan:2.0,xsin:1.8,sinsq:1.8};
-const baseCd=id=>CD[id]??1.8;
+const CD={const:0,x:1.6,nx:1.6,hx:1.3,dbl:1.6,ndbl:1.6,sin:2.4,cos:2.4,floor:2.4,abssin:2.4,saw:2.4,semi:2.4,recip:2.0,log:2.0,hx2:2.4,nhx2:2.4,sqrt:2.0,nsqrt:2.0,exp:2.4,damp:2.4,sgn:2.4,tan:2.6,xsin:2.4,sinsq:2.4};
+const baseCd=id=>CD[id]??2.4;
 function play(slot){
   const id=G.hand[slot];
   if(!alive||G.dead||G.paused||!id||G.cd[slot]>0)return;
@@ -592,7 +661,7 @@ function gacha(){
       stars=POOL[id]==='E'?16:POOL[id]==='R'?11:7;
       let body;
       if(free>=0){
-        G.hand[free]=id;G.cd[free]=0;
+        G.hand[free]=id;G.cd[free]=0;addDex(id);
         body=`<div class="swap-head">空き枠に追加したわ</div><div class="gacts"><button class="btn" id="gGo">すぐ再開</button></div>`;
       }else{
         body=`<div class="swap-head">どのカードと入れ替える？</div>
@@ -606,7 +675,7 @@ function gacha(){
       rv.querySelectorAll('.swap button').forEach(b=>b.onclick=()=>{
         const s=+b.dataset.s;
         if(G.act.slot===s)G.act.slot=-1; // the running function keeps going, the card just leaves the hand
-        G.hand[s]=id;G.cd[s]=0;resume();
+        G.hand[s]=id;G.cd[s]=0;addDex(id);resume();
       });
     }else{
       const I=ITEMS[id];stars=I.cat==='debuff'?6:12;
@@ -635,7 +704,7 @@ function resume(){
 }
 
 function die(why){
-  G.dead=true;G.flash=1;alive=false;sfxDeath();stopBgm();
+  G.dead=true;G.flash=1;alive=false;sfxDeath();stopBgm();setTimeout(()=>{if(G.dead&&!alive)startSad()},900);
   const score=Math.floor(G.x*10)/10;
   let nb=false;if(score>best){best=score;nb=true;try{localStorage.setItem('mpr-best-v2',String(best))}catch(e){}}
   updateUI(true);
@@ -653,10 +722,11 @@ function die(why){
       <div class="sub">最終手札　${G.hand.filter(Boolean).map(k=>fullNm(k)).join('　')}</div>
       ${thumb?`<img class="thumb" src="${thumb}" alt="x = ${score.toFixed(1)} までの軌跡">
       <div class="sub">画像を長押しで保存して、投稿に添付してね</div>`:''}
-      <a class="btn tw" href="https://twitter.com/intent/tweet?text=${encodeURIComponent(share)}&url=${encodeURIComponent('https://cceight.github.io/moving-point-run/')}" target="_blank" rel="noopener">ツイッターに投稿する</a>
-      <button class="btn ghost" id="retry">タイトルに戻る</button>
-      <button class="btn ghost" id="copy">結果の文章をコピー</button>`);
+      <a class="btn tw" href="https://twitter.com/intent/tweet?text=${encodeURIComponent(share)}&url=${encodeURIComponent('https://cceight.github.io/moving-point-run/')}" target="_blank" rel="noopener">Twitterに投稿</a>
+      <button class="btn" id="again">もう一度プレイ</button>
+      <div class="minirow"><button class="btn ghost mini" id="retry">タイトルに戻る</button><button class="btn ghost mini" id="copy">結果の文章をコピー</button></div>`);
     $('retry').onclick=title;
+    $('again').onclick=()=>{newGame();syncBgm()};
     $('copy').onclick=async()=>{try{await navigator.clipboard.writeText(share);$('copy').textContent='コピーした！'}catch(e){$('copy').textContent=share.replace(/\n/g,' / ')}};
   },700);
 }
@@ -691,6 +761,53 @@ function makeThumb(score,why){
     g.textAlign='left';g.font='italic 22px "STIX Two Text",serif';g.fillText('O',L-26,B+24);
     return c.toDataURL('image/png');
   }catch(e){return ''}
+}
+
+// ---------- function encyclopedia ----------
+const DEX_ORDER=['const','x','nx','hx','dbl','ndbl','sin','cos','floor','abssin','saw','semi','recip','log','hx2','nhx2','sqrt','nsqrt','exp','damp','sgn','tan','xsin','sinsq'];
+const DEX_TXT={
+  const:'定数関数。どこまで行っても高さが変わらない、いちばん平和な関数ね。微分すると0になるわ。',
+  x:'傾き1の一次関数。進んだぶんだけ上がる、正直者よ。微分すると定数、積分すると ½x² になるわ。',
+  nx:'傾き−1の一次関数。x のちょうど鏡写しね。符号反転を引くと x と入れ替わるわ。',
+  hx:'傾き½の一次関数。x の半分の勢いで上がるの。逆関数にすると 2x になるのよ。',
+  dbl:'傾き2の一次関数。急角度の上り坂ね。逆関数は ½x、積分すると x² になるわ。',
+  ndbl:'傾き−2の一次関数。一気に下る急坂よ。床が近い時は気をつけなさい。',
+  sin:'正弦関数。周期2πでずっと波打つ、三角関数の顔役ね。微分すると cos になるの。',
+  cos:'余弦関数。sin を ½π だけずらした形よ。微分すると −sin、積分すると sin に戻るわ。',
+  floor:'床関数 ⌊x⌋ は「x を超えない最大の整数」。それを2倍して、1ごとに2段上がる大階段にしてあるわ。',
+  abssin:'sin の絶対値。マイナス側を折り返すから、ずっと上側で跳ね続けるの。整流された電流の形と同じね。',
+  saw:'x − ⌊x⌋ は x の小数部分。0から1まで上がってはストンと戻る、のこぎり波よ。ここでは2倍してあるわ。',
+  semi:'単位円の上半分。x² + y² = 1 を y について解いた形ね。端まで行ったら平らに進むわ。',
+  recip:'反比例。x が大きくなるほど0に近づくけど、決して0にはならないの。積分すると log x になるわ。',
+  log:'自然対数。e を何乗したら x になるか、を返す関数よ。eˣ の逆関数で、微分すると 1/x になるの。',
+  hx2:'二次関数。放物線を描くわ。投げたボールの軌跡と同じ形ね。微分すると x になるの。',
+  nhx2:'上に凸の放物線。じわっと下がってから急降下するわ。',
+  sqrt:'平方根。最初はぐんと上がって、だんだん寝ていくの。逆関数にすると x² になるわ。',
+  nsqrt:'√x の上下反転。急に下がってすぐ寝そべるわ。',
+  exp:'指数関数。微分しても積分しても自分自身のまま、という唯一無二の関数よ。e は約2.718。',
+  damp:'減衰振動。バネや振り子が空気抵抗で揺れを弱めていく様子そのものね。',
+  sgn:'符号関数 sgn は、正なら1、負なら−1を返すの。sin と組み合わせると矩形波になるわ。ここでは2倍してあるわ。',
+  tan:'正接。½π に近づくと無限大に吹っ飛んで、反対側から戻ってくるの。微分すると 1/cos²x になるわ。',
+  xsin:'x と sin x の積。波の振れ幅が x に比例して、どんどん大きくなっていくわ。',
+  sinsq:'sin の中身が x²。進むほど波の間隔が詰まっていくの。音の高さが上がっていくチャープ信号と同じ形ね。',
+};
+let DEX=new Set();try{DEX=new Set(JSON.parse(localStorage.getItem('mpr-dex')||'[]'))}catch(e){}
+function addDex(id){if(!id||DEX.has(id)||!DEX_TXT[id])return;DEX.add(id);try{localStorage.setItem('mpr-dex',JSON.stringify([...DEX]))}catch(e){}}
+const dexCount=()=>DEX_ORDER.filter(k=>DEX.has(k)).length;
+const RNAME={N:'NORMAL',R:'RARE',E:'EPIC'};
+function openDex(sel){
+  $('ov').className='overlay dex';
+  const pick=sel||DEX_ORDER.find(k=>DEX.has(k));
+  const P=pick?DEFS[pick]:null;
+  showOv(`<div class="dex-head"><div class="h2">関数図鑑</div><div class="sub">${dexCount()} / ${DEX_ORDER.length}</div></div>
+    ${P?`<div class="dex-card" style="--c:${P.col}">${miniPlot(pick)}<div><div class="dn">${fullNm(pick)}</div><div class="dr">${pick==='const'?'BASIC':RNAME[POOL[pick]]||''}</div><div class="dt">${DEX_TXT[pick]}</div></div></div>`:'<div class="sub">まだ関数を拾っていないわ</div>'}
+    <div class="dex-grid">${DEX_ORDER.map(k=>DEX.has(k)
+      ?`<button class="dex-cell${k===pick?' sel':''}" data-k="${k}" style="--c:${DEFS[k].col}"><span>${fullNm(k)}</span><small>${k==='const'?'BASIC':RNAME[POOL[k]]}</small></button>`
+      :`<div class="dex-cell unk">？？？</div>`).join('')}</div>
+    <button class="btn ghost" id="dexBack">タイトルに戻る</button>`);
+  $('ov').querySelectorAll('.dex-cell[data-k]').forEach(b=>b.onclick=()=>openDex(b.dataset.k));
+  $('dexBack').onclick=title;
+  $('ov').scrollTop=0;
 }
 
 // ---------- effects ----------
@@ -798,10 +915,12 @@ function draw(now){
     const px=X(q.x);if(px<-10||px>W+10)continue;
     ctx.fillStyle=COL.ink;ctx.globalAlpha=q.ok?0.2:1;
     const w=q.tun?4:6;
-    ctx.fillRect(px-w/2,0,w,Math.max(0,Y(q.hi)));
-    if(q.lo>0)ctx.fillRect(px-w/2,Y(q.lo),w,Y(0)-Y(q.lo));
+    if(!q.brokeTop)ctx.fillRect(px-w/2,0,w,Math.max(0,Y(q.hi)));
+    if(q.lo>0&&!q.brokeBot)ctx.fillRect(px-w/2,Y(q.lo),w,Y(0)-Y(q.lo));
   }
   ctx.globalAlpha=1;
+  // debris from smashed walls
+  for(const d of G.debris){ctx.save();ctx.globalAlpha=Math.max(0,Math.min(1,d.life*1.5));ctx.translate(X(d.x),Y(d.y));ctx.rotate(d.r);ctx.fillStyle=COL.ink;ctx.fillRect(-d.w/2,-d.h/2,d.w,d.h);ctx.restore()}
   // pickup boxes
   for(const it of G.items){
     if(it.gone)continue;
@@ -844,7 +963,7 @@ function showOv(h){const o=$('ov');o.innerHTML=h;o.hidden=false}
 function hideOv(){$('ov').hidden=true}
 
 function title(){
-  stopBgm();
+  stopBgm();stopSad();
   $('ov').className='overlay';
   showOv(`<div class="logo">
       <svg viewBox="0 0 300 104" aria-hidden="true">
@@ -861,10 +980,12 @@ function title(){
     <div class="sub">ベスト <i>x</i> = ${best.toFixed(1)}</div>
     <button class="btn" id="go">スタート</button>
     <button class="btn ghost" id="tutBtn">チュートリアル</button>
+    <button class="btn ghost" id="dexBtn">関数図鑑 <small>${dexCount()}/${DEX_ORDER.length}</small></button>
     <div class="sub" style="font-size:11px">BGM：魔王魂</div>
     <button class="modeBtn ${BOARD?'to-note':'to-board'}" id="modeBtn">${BOARD?'板書モード':'黒板モード'}</button>`);
   $('go').onclick=()=>{newGame();syncBgm()};
   $('tutBtn').onclick=startTut;
+  $('dexBtn').onclick=()=>openDex();
   $('modeBtn').onclick=()=>{BOARD=!BOARD;try{localStorage.setItem('mpr-board',BOARD?'1':'0')}catch(e){}document.documentElement.dataset.mode=BOARD?'board':'';readTokens();handKey='';if(G)updateUI(true);title()};
   const hint=$('hint'),story=hint.closest('.story');
   const on=e=>{if(e.pointerType!=='mouse'){e.preventDefault();story.classList.add('on')}};
@@ -883,7 +1004,8 @@ const SCRIPT=[
   ['doya','run','まず主役はこの点、動点Pね。原点Oから勝手に右へ走り続けるの。止まることはできないわよ。休まず進む西から東、ってやつね。'],
   ['normal','run','点が描いている線は、今セットされている関数のグラフそのもの。最初は <i>y</i> = const、つまり今の高さのまま真っすぐ水平に進むってわけ。'],
   ['smile','switch','下のカードをタップすると、関数が切り替わるわ。大事なのは、今いる場所からその形が始まること。線は途切れずに、ちゃんとつながるの。'],
-  ['normal','switch','薄い線は、今選んだらこう進むっていう予告線よ。'],
+  ['normal','preview','走っている点から伸びてる薄い線、これが予告線よ。手札のカードを今選んだら、どう進むかを1枚ずつ見せてくれるの。'],
+  ['doya','preview','ゲートの隙間を通っている線を探して、そのカードを選べばいいってわけ。<br>線の色はカードの色と同じだから、見比べなさい。'],
   ['normal','formula','だからカードの式は、走っている間ずっと書き換わってるでしょ？「今選んだらこの式になる」っていう、平行移動した式をリアルタイムで見せてるのよ。'],
   ['doya','formula','平行移動の感覚なんて、遊んでるうちに勝手に身につくわ。お得でしょ？'],
   ['normal','cooldown','次はクールダウン。別のカードに切り替えた瞬間、手放したカードは灰色になって、時計回りに少しずつ戻ってくるわ。'],
@@ -951,7 +1073,7 @@ function tutLoop(now){
   const D=T.demo;
   // demo sound cues: fire once when the demo's point crosses its event x
   const cross=(px,at,fn)=>{if(T.lastX<at&&px>=at)fn()};
-  {const cyc={switch:[8,3,sfxTap],formula:[8,3,sfxTap],crash:[7,5,sfxDeath],floor:[7,5,sfxDeath],box:[7,5,sfxGacha],gate:[10.5,5,()=>note(0)]}[D];
+  {const cyc={preview:[9,2,sfxTap],switch:[8,3,sfxTap],formula:[8,3,sfxTap],crash:[7,5,sfxDeath],floor:[7,5,sfxDeath],box:[7,5,sfxGacha],gate:[10.5,5,()=>note(0)]}[D];
    if(cyc){const px=(t*1.8)%cyc[0];if(px<T.lastX)T.lastX=-1;cross(px,cyc[1],cyc[2]);T.lastX=px}}
   if(D==='run'){runPath(x=>0,9,DEFS.const.col);label('動点P →',X(1),Y(1.2),COL.dim,16)}
   else if(D==='switch'||D==='formula'){
@@ -1008,6 +1130,23 @@ function tutLoop(now){
     c.fillStyle=px>=5?COL.bad:DEFS[px<3?'const':'nx'].col;c.beginPath();c.arc(X(px),Y(f(px)),7,0,Math.PI*2);c.fill();
     if(px>=5){c.fillStyle='rgba(224,72,94,.12)';c.fillRect(0,0,TW,TH);label('OUT',X(5),Y(1.5),COL.bad,26,'center')}
   }
+  else if(D==='preview'){
+    // point runs flat at y=1, previews fan out; the x line threads the gate, so it picks x at x=2
+    const px=(t*1.4)%9,sw=2,gx=5,f=x=>x<sw?1:1+(x-sw);
+    const ids=['x','nx','sin','hx2'];
+    c.fillStyle=COL.ink;c.fillRect(X(gx)-3,0,6,Y(5));c.fillRect(X(gx)-3,Y(3),6,oy-Y(3));
+    label('ゲート',X(gx)+8,Y(5)-8,COL.dim,13);
+    const qx=Math.min(px,7),qy=f(qx);
+    if(qx<sw){
+      ids.forEach(id=>{const D2=DEFS[id],hot=id==='x'&&qx>sw-0.9;c.strokeStyle=D2.col;c.globalAlpha=hot?0.95:0.45;c.lineWidth=hot?3:1.6;c.beginPath();
+        for(let u=0;u<=4.6;u+=0.05){const yy=Math.max(-0.3,Math.min(9,qy+D2.g(u)));u===0?c.moveTo(X(qx+u),Y(yy)):c.lineTo(X(qx+u),Y(yy))}c.stroke();c.globalAlpha=1;
+      });
+      ids.forEach((id,k)=>label(fullNm(id).replace(/<[^>]+>/g,''),ox+10,18+k*18,DEFS[id].col,13));
+      if(qx>sw-0.9)label('y = x なら通れる！',ox+10,18+ids.length*18+8,DEFS.x.col,15);
+    }
+    c.strokeStyle=COL.ink;c.lineWidth=2.5;c.beginPath();for(let x=0;x<=qx;x+=0.04){x===0?c.moveTo(X(x),Y(f(x))):c.lineTo(X(x),Y(f(x)))}c.stroke();
+    c.fillStyle=DEFS[qx<sw?'const':'x'].col;c.beginPath();c.arc(X(qx),Y(qy),7,0,Math.PI*2);c.fill();
+  }
   else if(D==='crash'){
     const px=Math.min(5,(t*1.8)%7);
     c.strokeStyle=COL.ink;c.lineWidth=2.5;c.beginPath();c.moveTo(X(0),Y(2));c.lineTo(X(px),Y(2));c.stroke();
@@ -1048,7 +1187,7 @@ function tutLoop(now){
 // new characters stalls that frame. Load every canvas string up front.
 function warmFonts(){
   if(!document.fonts||!document.fonts.load)return;
-  const jp='？！ガチャOUTタップここが書き換わる時計回りに戻ってくる空き枠固定ゲート予告線表示微分符号反転秒スピードアップクールダウンダウン動点Pで水平に進むのカードを選んだ→、軸の下に落ちる激突';
+  const jp='関数図鑑これなら通れる？！ガチャOUTタップここが書き換わる時計回りに戻ってくる空き枠固定ゲート予告線表示微分符号反転秒スピードアップクールダウンダウン動点Pで水平に進むのカードを選んだ→、軸の下に落ちる激突';
   const math='0123456789.−+=()½¼⅙⅔√⌊⌋²³ᐟ/∫arcsinoxyOPMvgRu';
   [['700 16px "Shippori Mincho"',jp],['800 16px "Shippori Mincho"','？'],['700 16px "STIX Two Text"',math],
    ['italic 600 16px "STIX Two Text"',math],['italic 400 16px "STIX Two Text"',math],['600 16px "STIX Two Text"',math+'MovingPointRun']]
