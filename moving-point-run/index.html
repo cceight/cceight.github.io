@@ -629,9 +629,14 @@ function rollItem(){
   return ks[Math.random()*ks.length|0];
 }
 function miniPlot(id){
-  const g=DEFS[id].g,pts=[];let mn=0,mx=0;
-  for(let u=0;u<=4.001;u+=0.05){const v=g(u);pts.push([u,v]);mn=Math.min(mn,v);mx=Math.max(mx,v)}
-  const W=170,H=90,p=10,sx=(W-2*p)/4,span=Math.max(1,mx-mn),sy=(H-2*p)/span;
+  const D0=DEFS[id],g=D0.g,pts=[];let mn=0,mx=0;
+  const W=170,H=90,p=10;
+  // straight lines get a 1:1 scale so the drawn angle is the true slope; curves are fitted to the box
+  const lin=D0.lin!==undefined&&D0.lin!==0;
+  const K=(W-2*p)/4,xr=lin?Math.min(4,(H-2*p)/(Math.abs(D0.lin)*K)):4;
+  for(let u=0;u<=xr+1e-3;u+=xr/80){const v=g(u);pts.push([u,v]);mn=Math.min(mn,v);mx=Math.max(mx,v)}
+  let sx=(W-2*p)/xr,span=Math.max(1,mx-mn),sy=(H-2*p)/span;
+  if(lin){sx=sy=K}
   const X=u=>p+u*sx,Y=v=>H-p-(v-mn)*sy;
   let d='';pts.forEach(([u,v],i)=>{d+=(i?'L':'M')+X(u).toFixed(1)+' '+Y(v).toFixed(1)});
   return `<svg viewBox="0 0 ${W} ${H}" aria-hidden="true">
