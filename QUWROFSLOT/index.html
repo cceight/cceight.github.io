@@ -2,6 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <title>QUWROFSLOT</title>
 <style>
   *{box-sizing:border-box;}
@@ -15,7 +16,12 @@
     align-items:center;
     justify-content:center;
     font-family:'Georgia','Yu Gothic',sans-serif;
+    padding:16px;
+    overflow-x:hidden;
+    -webkit-tap-highlight-color:transparent;
+    touch-action:manipulation;
   }
+  button{ -webkit-user-select:none; user-select:none; }
   .hidden{ display:none !important; }
 
   /* ===== メダル表示 ===== */
@@ -54,13 +60,15 @@
 
   /* ===== リール ===== */
   .reels{
+    --gap:20px;
     display:flex;
-    gap:20px;
+    gap:var(--gap);
     margin-bottom:20px;
   }
   .reel-window{
-    width:220px;
-    height:220px;
+    /* 画面幅に合わせて縮む(最大220px) */
+    width:min(220px, calc((100vw - 32px - var(--gap) * 2) / 3));
+    aspect-ratio:1 / 1;
     border:2px solid #333;
     border-radius:8px;
     overflow:hidden;
@@ -138,6 +146,20 @@
     cursor:default;
   }
 
+  /* ===== スマホ ===== */
+  @media (max-width:600px){
+    .reels{ --gap:8px; }
+    .reel-window{ border-radius:6px; }
+    .status{ gap:10px; }
+    .medals{ font-size:18px; }
+    .medals b{ font-size:26px; }
+    .result{ font-size:18px; height:28px; }
+    .bets{ gap:8px; }
+    .bet-btn{ padding:8px 14px; }
+    .controls, .loading{ height:60px; line-height:60px; }
+    .controls button img{ height:60px; }
+  }
+
   /* ===== メダル購入画面 ===== */
   .shop-bg{
     position:fixed;
@@ -153,6 +175,8 @@
     background:#fff;
     width:100%;
     max-width:420px;
+    max-height:calc(100vh - 32px);
+    overflow-y:auto;
     border-radius:10px;
     padding:20px;
     position:relative;
