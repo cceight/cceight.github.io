@@ -39,6 +39,32 @@
     font-size:30px;
     margin:0 4px;
   }
+
+  /* 数字ダイヤル(各桁が縦に回る) */
+  .dial{
+    display:inline-flex;
+    vertical-align:bottom;
+    height:1em;
+    line-height:1em;
+    overflow:hidden;
+    font-variant-numeric:tabular-nums lining-nums;
+  }
+  .dial-col{
+    display:inline-block;
+    height:1em;
+    overflow:hidden;
+  }
+  .dial-strip{
+    display:block;
+    will-change:transform;
+  }
+  .dial-strip span{
+    display:block;
+    height:1em;
+    line-height:1em;
+    text-align:center;
+  }
+  .dial-sep{ display:inline-block; }
   .buy-open{
     border:2px solid #333;
     background:#fff;
@@ -273,7 +299,7 @@
 <body>
 
 <div class="status">
-  <div class="medals">MEDAL<b id="medalCount">0</b>枚</div>
+  <div class="medals">MEDAL<b id="medalCount" class="dial"></b>枚</div>
   <button class="buy-open" id="buyOpenBtn">メダル購入</button>
 </div>
 
@@ -400,8 +426,100 @@ function setMedals(n){
   updateUI();
 }
 
+// ===== メダル表示(数字ダイヤル) =====
+// 内部の medals は即確定・保存し、表示だけが後から追いかける
+const DIGIT_ROLL_MS = 90;   // 1桁が次の数字へ回る時間
+let dialShown = medals;     // いま画面に出ている枚数
+let dialUp = true;          // 回る向き(true=増加)
+let dialLayout = '';
+let dialRaf = null;
+const digitCols = [];       // {strip, pos, snap}
+
+function setStrip(col, pos, animate){
+  col.strip.style.transition = animate ? `transform ${DIGIT_ROLL_MS}ms linear` : 'none';
+  if(!animate) col.strip.offsetHeight;   // 即時反映
+  col.strip.style.transform = `translateY(${-pos}em)`;
+  col.pos = pos;
+}
+
+// ストリップは 0〜9 の後ろにもう一つ 0 を持つ(9→0 / 0→9 をつなげて回すため)
+function rollDigit(col, d){
+  if(col.snap){ clearTimeout(col.snap); col.snap = null; }
+  const cur = col.pos % 10;
+  if(cur === d && col.pos !== 10) return;
+  if(col.pos === 10) setStrip(col, 0, false);
+  if(dialUp && cur === 9 && d === 0){
+    setStrip(col, 10, true);
+    col.snap = setTimeout(() => { setStrip(col, 0, false); col.snap = null; }, DIGIT_ROLL_MS);
+  }else if(!dialUp && cur === 0 && d === 9){
+    setStrip(col, 10, false);
+    setStrip(col, 9, true);
+  }else{
+    setStrip(col, d, true);
+  }
+}
+
+function renderDial(n){
+  const s = n.toLocaleString();
+  const layout = s.replace(/\d/g, 'd');
+  if(layout !== dialLayout){
+    // 桁数が変わった時は作り直す
+    dialLayout = layout;
+    medalCountEl.innerHTML = '';
+    digitCols.forEach(c => c.snap && clearTimeout(c.snap));
+    digitCols.length = 0;
+    for(const ch of s){
+      if(/\d/.test(ch)){
+        const colEl = document.createElement('span');
+        colEl.className = 'dial-col';
+        const strip = document.createElement('span');
+        strip.className = 'dial-strip';
+        strip.innerHTML = [0,1,2,3,4,5,6,7,8,9,0].map(d => `<span>${d}</span>`).join('');
+        colEl.appendChild(strip);
+        medalCountEl.appendChild(colEl);
+        const col = { strip, pos:0, snap:null };
+        setStrip(col, Number(ch), false);
+        digitCols.push(col);
+      }else{
+        const sep = document.createElement('span');
+        sep.className = 'dial-sep';
+        sep.textContent = ch;
+        medalCountEl.appendChild(sep);
+      }
+    }
+    return;
+  }
+  const digits = [...s].filter(c => /\d/.test(c)).map(Number);
+  digits.forEach((d, i) => rollDigit(digitCols[i], d));
+}
+
+function animateMedals(){
+  if(dialRaf){ cancelAnimationFrame(dialRaf); dialRaf = null; }
+  const from = dialShown, to = medals;
+  if(from === to) return;
+  const diff = Math.abs(to - from);
+  const up = to > from;
+  // 増加：1枚ずつ→途中から加速(最大約2秒)／減少：素早く(最大約0.5秒)
+  const dur = up ? Math.min(2000, Math.max(250, diff * 60)) : Math.min(500, diff * 40);
+  const t0 = performance.now();
+  dialUp = up;
+  const step = now => {
+    const t = Math.min(1, (now - t0) / dur);
+    const e = up ? t * t : t;
+    const v = Math.round(from + (to - from) * e);
+    if(v !== dialShown){
+      dialShown = v;
+      renderDial(v);
+    }
+    dialRaf = t < 1 ? requestAnimationFrame(step) : null;
+  };
+  dialRaf = requestAnimationFrame(step);
+}
+
+renderDial(dialShown);
+
 function updateUI(){
-  medalCountEl.textContent = medals.toLocaleString();
+  animateMedals();
   betBtns.forEach(b => {
     b.classList.toggle('selected', Number(b.dataset.bet) === bet);
     b.disabled = spinning;
