@@ -38,6 +38,17 @@
     width:100%;
     height:100%;
     object-fit:contain;
+    visibility:hidden;
+  }
+  .reel-window img.on{
+    visibility:visible;
+  }
+  .loading{
+    height:70px;
+    line-height:70px;
+    font-size:20px;
+    letter-spacing:0.2em;
+    color:#333;
   }
   .controls{
     position:relative;
@@ -59,7 +70,7 @@
     height:70px;
     display:block;
   }
-  .controls button.hidden{
+  .controls .hidden{
     display:none;
   }
 
@@ -68,13 +79,14 @@
 <body>
 
 <div class="reels">
-  <div class="reel-window" id="reel0"><img src="assets/frames/frame00_0.png"></div>
-  <div class="reel-window" id="reel1"><img src="assets/frames/frame00_0.png"></div>
-  <div class="reel-window" id="reel2"><img src="assets/frames/frame00_0.png"></div>
+  <div class="reel-window" id="reel0"></div>
+  <div class="reel-window" id="reel1"></div>
+  <div class="reel-window" id="reel2"></div>
 </div>
 
 <div class="controls">
-  <button id="startBtn"><img src="assets/start.png" alt="START"></button>
+  <div class="loading" id="loading">LOADING…</div>
+  <button id="startBtn" class="hidden"><img src="assets/start.png" alt="START"></button>
   <button id="stopBtn" class="hidden"><img src="assets/stop.png" alt="STOP"></button>
 </div>
 
@@ -96,16 +108,53 @@ const reelEls = [
 const startBtn = document.getElementById('startBtn');
 const stopBtn = document.getElementById('stopBtn');
 
+const loadingEl = document.getElementById('loading');
+
 const frameIndices = [0, 0, 0];
 const timers = [null, null, null];
 const finalDigits = [null, null, null];
 let nextToStop = 0;   // 次にSTOPで止まる予定のリール番号
 
+// 各リールに全フレームを重ねて配置し、表示する1枚だけ切り替える
+// (回転中に画像の読み込み・展開が起きないようにするため)
+const reelImgs = reelEls.map(el => FRAMES.map((src, i) => {
+  const img = document.createElement('img');
+  img.src = src;
+  img.alt = '';
+  if(i === 0) img.classList.add('on');
+  el.appendChild(img);
+  return img;
+}));
+
+function showFrame(idx, frame){
+  const imgs = reelImgs[idx];
+  imgs[frameIndices[idx]].classList.remove('on');
+  frameIndices[idx] = frame;
+  imgs[frame].classList.add('on');
+}
+
+// 画像の読み込み+展開を待つ
+function waitImage(img){
+  const ready = img.complete && img.naturalWidth > 0
+    ? Promise.resolve()
+    : new Promise(res => { img.addEventListener('load', res, {once:true}); img.addEventListener('error', res, {once:true}); });
+  return ready.then(() => (img.decode ? img.decode().catch(() => {}) : null));
+}
+
+const allImgs = [
+  ...reelImgs.flat(),
+  startBtn.querySelector('img'),
+  stopBtn.querySelector('img'),
+];
+Promise.all(allImgs.map(waitImage)).then(() => {
+  loadingEl.classList.add('hidden');
+  startBtn.classList.remove('hidden');
+});
+
 function startReelSpin(idx){
   reelEls[idx].classList.add('active');
   timers[idx] = setInterval(() => {
-    frameIndices[idx] = (frameIndices[idx] + 1) % FRAMES.length;
-    reelEls[idx].querySelector('img').src = FRAMES[frameIndices[idx]];
+    showFrame(idx, (frameIndices[idx] + 1) % FRAMES.length);
   }, INTERVAL);
 }
 
@@ -121,7 +170,7 @@ startBtn.onclick = () => {
   stopBtn.classList.remove('hidden');
   nextToStop = 0;
   for(let i=0;i<3;i++){
-    frameIndices[i] = 0;
+    showFrame(i, 0);
     startReelSpin(i);
   }
 };
