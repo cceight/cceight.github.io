@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>QUWROFSLOT</title>
+<style>
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    min-height:100vh;
+    background:#ffffff;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    font-family:'Georgia','Yu Gothic',sans-serif;
+  }
+  .reels{
+    display:flex;
+    gap:20px;
+    margin-bottom:32px;
+  }
+  .reel-window{
+    width:220px;
+    height:220px;
+    border:2px solid #333;
+    border-radius:8px;
+    overflow:hidden;
+    position:relative;
+    background:#fff;
+  }
+  .reel-window.active{
+    border-color:#c81e2c;
+  }
+  .reel-window img{
+    position:absolute;
+    top:0; left:0;
+    width:100%;
+    height:100%;
+    object-fit:contain;
+  }
+  .controls{
+    position:relative;
+    height:70px;
+    display:flex;
+    justify-content:center;
+  }
+  .controls button{
+    position:absolute;
+    top:0;
+    left:50%;
+    transform:translateX(-50%);
+    border:none;
+    background:none;
+    padding:0;
+    cursor:pointer;
+  }
+  .controls button img{
+    height:70px;
+    display:block;
+  }
+  .controls button.hidden{
+    display:none;
+  }
+
+</style>
+</head>
+<body>
+
+<div class="reels">
+  <div class="reel-window" id="reel0"><img src="assets/frames/frame00_0.png"></div>
+  <div class="reel-window" id="reel1"><img src="assets/frames/frame00_0.png"></div>
+  <div class="reel-window" id="reel2"><img src="assets/frames/frame00_0.png"></div>
+</div>
+
+<div class="controls">
+  <button id="startBtn"><img src="assets/start.png" alt="START"></button>
+  <button id="stopBtn" class="hidden"><img src="assets/stop.png" alt="STOP"></button>
+</div>
+
+<script>
+const FRAMES = [];
+for(let i=0;i<10;i++){
+  const d = i % 10;
+  FRAMES.push(`assets/frames/frame${String(i).padStart(2,'0')}_${d}.png`);
+}
+
+const FPS = 10;
+const INTERVAL = 1000 / FPS;
+
+const reelEls = [
+  document.getElementById('reel0'),
+  document.getElementById('reel1'),
+  document.getElementById('reel2'),
+];
+const startBtn = document.getElementById('startBtn');
+const stopBtn = document.getElementById('stopBtn');
+
+const frameIndices = [0, 0, 0];
+const timers = [null, null, null];
+const finalDigits = [null, null, null];
+let nextToStop = 0;   // 次にSTOPで止まる予定のリール番号
+
+function startReelSpin(idx){
+  reelEls[idx].classList.add('active');
+  timers[idx] = setInterval(() => {
+    frameIndices[idx] = (frameIndices[idx] + 1) % FRAMES.length;
+    reelEls[idx].querySelector('img').src = FRAMES[frameIndices[idx]];
+  }, INTERVAL);
+}
+
+function stopReelSpin(idx){
+  clearInterval(timers[idx]);
+  timers[idx] = null;
+  reelEls[idx].classList.remove('active');
+  finalDigits[idx] = frameIndices[idx] % 10;
+}
+
+startBtn.onclick = () => {
+  startBtn.classList.add('hidden');
+  stopBtn.classList.remove('hidden');
+  nextToStop = 0;
+  for(let i=0;i<3;i++){
+    frameIndices[i] = 0;
+    startReelSpin(i);
+  }
+};
+
+stopBtn.onclick = () => {
+  stopReelSpin(nextToStop);
+  nextToStop++;
+
+  if(nextToStop >= 3){
+    stopBtn.classList.add('hidden');
+    startBtn.classList.remove('hidden');
+  }
+};
+</script>
+
+</body>
+</html>
