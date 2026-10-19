@@ -9,16 +9,54 @@
     margin:0;
     min-height:100vh;
     background:#ffffff;
+    color:#222;
     display:flex;
     flex-direction:column;
     align-items:center;
     justify-content:center;
     font-family:'Georgia','Yu Gothic',sans-serif;
   }
+  .hidden{ display:none !important; }
+
+  /* ===== メダル表示 ===== */
+  .status{
+    display:flex;
+    align-items:center;
+    gap:16px;
+    margin-bottom:16px;
+  }
+  .medals{
+    font-size:22px;
+    letter-spacing:0.05em;
+  }
+  .medals b{
+    font-size:30px;
+    margin:0 4px;
+  }
+  .buy-open{
+    border:2px solid #333;
+    background:#fff;
+    border-radius:6px;
+    padding:6px 12px;
+    font:inherit;
+    font-size:14px;
+    cursor:pointer;
+  }
+  .buy-open:disabled{ opacity:0.35; cursor:default; }
+
+  .result{
+    height:32px;
+    font-size:22px;
+    font-weight:bold;
+    color:#c81e2c;
+    margin-bottom:8px;
+  }
+
+  /* ===== リール ===== */
   .reels{
     display:flex;
     gap:20px;
-    margin-bottom:32px;
+    margin-bottom:20px;
   }
   .reel-window{
     width:220px;
@@ -43,6 +81,31 @@
   .reel-window img.on{
     visibility:visible;
   }
+
+  /* ===== ベット切り替え ===== */
+  .bets{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom:20px;
+    font-size:16px;
+  }
+  .bet-btn{
+    border:2px solid #333;
+    background:#fff;
+    border-radius:6px;
+    padding:6px 14px;
+    font:inherit;
+    font-size:16px;
+    cursor:pointer;
+  }
+  .bet-btn.selected{
+    background:#222;
+    color:#fff;
+  }
+  .bet-btn:disabled{ opacity:0.35; cursor:default; }
+
+  /* ===== START / STOP ===== */
   .loading{
     height:70px;
     line-height:70px;
@@ -70,13 +133,102 @@
     height:70px;
     display:block;
   }
-  .controls .hidden{
-    display:none;
+  .controls button.disabled{
+    opacity:0.35;
+    cursor:default;
   }
 
+  /* ===== メダル購入画面 ===== */
+  .shop-bg{
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,0.55);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:16px;
+    z-index:10;
+  }
+  .shop{
+    background:#fff;
+    width:100%;
+    max-width:420px;
+    border-radius:10px;
+    padding:20px;
+    position:relative;
+  }
+  .shop h2{
+    margin:0 0 12px;
+    font-size:20px;
+    text-align:center;
+  }
+  .shop .no-medal{
+    color:#c81e2c;
+    font-weight:bold;
+    font-size:20px;
+    text-align:center;
+    margin-bottom:12px;
+  }
+  .shop .close{
+    position:absolute;
+    top:8px; right:10px;
+    border:none;
+    background:none;
+    font-size:24px;
+    cursor:pointer;
+    line-height:1;
+  }
+  .shop-items{
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+    margin-bottom:14px;
+  }
+  .shop-item{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    border:2px solid #333;
+    border-radius:6px;
+    background:#fff;
+    padding:10px 14px;
+    font:inherit;
+    font-size:17px;
+    cursor:pointer;
+  }
+  .shop-item:hover{ background:#f3f3f3; }
+  .shop-item .price{ font-weight:bold; }
+  .shop .owned{
+    font-size:13px;
+    color:#555;
+    margin-bottom:10px;
+    text-align:center;
+  }
+  .shop .notice{
+    font-size:12px;
+    line-height:1.7;
+    color:#444;
+    border-top:1px solid #ccc;
+    padding-top:10px;
+  }
+  .shop .notice p{ margin:0 0 6px; font-weight:bold; }
+  .shop .notice ul{ margin:0; padding-left:1.2em; }
+  .shop .thanks{
+    text-align:center;
+    font-size:16px;
+    margin:8px 0 0;
+    min-height:1.4em;
+  }
 </style>
 </head>
 <body>
+
+<div class="status">
+  <div class="medals">MEDAL<b id="medalCount">0</b>枚</div>
+  <button class="buy-open" id="buyOpenBtn">メダル購入</button>
+</div>
+
+<div class="result" id="result"></div>
 
 <div class="reels">
   <div class="reel-window" id="reel0"></div>
@@ -84,10 +236,43 @@
   <div class="reel-window" id="reel2"></div>
 </div>
 
+<div class="bets">
+  <span>BET</span>
+  <button class="bet-btn" data-bet="3">3枚</button>
+  <button class="bet-btn" data-bet="10">10枚</button>
+  <button class="bet-btn" data-bet="30">30枚</button>
+</div>
+
 <div class="controls">
   <div class="loading" id="loading">LOADING…</div>
   <button id="startBtn" class="hidden"><img src="assets/start.png" alt="START"></button>
   <button id="stopBtn" class="hidden"><img src="assets/stop.png" alt="STOP"></button>
+</div>
+
+<!-- メダル購入画面 -->
+<div class="shop-bg hidden" id="shopBg">
+  <div class="shop">
+    <button class="close" id="shopClose" aria-label="閉じる">×</button>
+    <h2>メダル購入</h2>
+    <div class="no-medal hidden" id="noMedal">メダルがありません！</div>
+    <div class="shop-items">
+      <button class="shop-item" data-amount="10"><span>メダル 10枚</span><span class="price">0円</span></button>
+      <button class="shop-item" data-amount="50"><span>メダル 50枚</span><span class="price">0円</span></button>
+      <button class="shop-item" data-amount="100"><span>メダル 100枚</span><span class="price">0円</span></button>
+    </div>
+    <div class="owned" id="owned"></div>
+    <div class="notice">
+      <p>ご購入前に必ずお読みください</p>
+      <ul>
+        <li>購入したメダルは、本ゲーム内でのみご利用いただけます。</li>
+        <li>購入後のキャンセル・返金には一切応じられません。なお、お支払いいただく金額は0円です。</li>
+        <li>未成年の方は、保護者の同意を得たうえでご購入ください。0円ですが。</li>
+        <li>メダルの購入は計画的に。0円ですが。</li>
+        <li>何枚購入されても、当方の売上は0円です。</li>
+      </ul>
+    </div>
+    <div class="thanks" id="thanks"></div>
+  </div>
 </div>
 
 <script>
@@ -100,6 +285,15 @@ for(let i=0;i<10;i++){
 const FPS = 10;
 const INTERVAL = 1000 / FPS;
 
+// ===== メダル設定 =====
+const START_MEDALS = 50;
+const BETS = [3, 10, 30];
+const MIN_BET = Math.min(...BETS);
+const PAY_777 = 100;     // 777揃い：ベットの100倍
+const PAY_TRIPLE = 5;    // 7以外の数字揃い：ベットの5倍
+const SAVE_KEY = 'quwrofslot-medals';
+const BET_KEY = 'quwrofslot-bet';
+
 const reelEls = [
   document.getElementById('reel0'),
   document.getElementById('reel1'),
@@ -107,14 +301,58 @@ const reelEls = [
 ];
 const startBtn = document.getElementById('startBtn');
 const stopBtn = document.getElementById('stopBtn');
-
 const loadingEl = document.getElementById('loading');
+const medalCountEl = document.getElementById('medalCount');
+const resultEl = document.getElementById('result');
+const buyOpenBtn = document.getElementById('buyOpenBtn');
+const betBtns = [...document.querySelectorAll('.bet-btn')];
+const shopBg = document.getElementById('shopBg');
+const shopClose = document.getElementById('shopClose');
+const noMedalEl = document.getElementById('noMedal');
+const ownedEl = document.getElementById('owned');
+const thanksEl = document.getElementById('thanks');
 
 const frameIndices = [0, 0, 0];
 const timers = [null, null, null];
 const finalDigits = [null, null, null];
 let nextToStop = 0;   // 次にSTOPで止まる予定のリール番号
+let spinning = false;
+let ready = false;
 
+// ===== 保存まわり =====
+function loadNumber(key, fallback){
+  try{
+    const v = localStorage.getItem(key);
+    if(v === null) return fallback;
+    const n = parseInt(v, 10);
+    return Number.isFinite(n) && n >= 0 ? n : fallback;
+  }catch(e){ return fallback; }
+}
+function saveNumber(key, n){
+  try{ localStorage.setItem(key, String(n)); }catch(e){}
+}
+
+let medals = loadNumber(SAVE_KEY, START_MEDALS);
+let bet = loadNumber(BET_KEY, MIN_BET);
+if(!BETS.includes(bet)) bet = MIN_BET;
+
+function setMedals(n){
+  medals = n;
+  saveNumber(SAVE_KEY, medals);
+  updateUI();
+}
+
+function updateUI(){
+  medalCountEl.textContent = medals.toLocaleString();
+  betBtns.forEach(b => {
+    b.classList.toggle('selected', Number(b.dataset.bet) === bet);
+    b.disabled = spinning;
+  });
+  buyOpenBtn.disabled = spinning;
+  startBtn.classList.toggle('disabled', medals < bet);
+}
+
+// ===== リール =====
 // 各リールに全フレームを重ねて配置し、表示する1枚だけ切り替える
 // (回転中に画像の読み込み・展開が起きないようにするため)
 const reelImgs = reelEls.map(el => FRAMES.map((src, i) => {
@@ -135,10 +373,10 @@ function showFrame(idx, frame){
 
 // 画像の読み込み+展開を待つ
 function waitImage(img){
-  const ready = img.complete && img.naturalWidth > 0
+  const loaded = img.complete && img.naturalWidth > 0
     ? Promise.resolve()
     : new Promise(res => { img.addEventListener('load', res, {once:true}); img.addEventListener('error', res, {once:true}); });
-  return ready.then(() => (img.decode ? img.decode().catch(() => {}) : null));
+  return loaded.then(() => (img.decode ? img.decode().catch(() => {}) : null));
 }
 
 const allImgs = [
@@ -147,8 +385,11 @@ const allImgs = [
   stopBtn.querySelector('img'),
 ];
 Promise.all(allImgs.map(waitImage)).then(() => {
+  ready = true;
   loadingEl.classList.add('hidden');
   startBtn.classList.remove('hidden');
+  updateUI();
+  checkOutOfMedals();
 });
 
 function startReelSpin(idx){
@@ -165,7 +406,36 @@ function stopReelSpin(idx){
   finalDigits[idx] = frameIndices[idx] % 10;
 }
 
+// ===== 判定 =====
+function judge(){
+  const [a, b, c] = finalDigits;
+  if(a === b && b === c){
+    const rate = a === 7 ? PAY_777 : PAY_TRIPLE;
+    const pay = bet * rate;
+    resultEl.textContent = (a === 7 ? '777！！ ' : `${a}${a}${a} 揃い！ `) + `+${pay.toLocaleString()}枚`;
+    setMedals(medals + pay);
+  }
+}
+
+// ===== ボタン =====
+betBtns.forEach(b => {
+  b.onclick = () => {
+    if(spinning) return;
+    bet = Number(b.dataset.bet);
+    saveNumber(BET_KEY, bet);
+    updateUI();
+  };
+});
+
 startBtn.onclick = () => {
+  if(!ready || spinning) return;
+  if(medals < bet){
+    checkOutOfMedals();
+    return;
+  }
+  spinning = true;
+  resultEl.textContent = '';
+  setMedals(medals - bet);
   startBtn.classList.add('hidden');
   stopBtn.classList.remove('hidden');
   nextToStop = 0;
@@ -180,10 +450,48 @@ stopBtn.onclick = () => {
   nextToStop++;
 
   if(nextToStop >= 3){
+    spinning = false;
     stopBtn.classList.add('hidden');
     startBtn.classList.remove('hidden');
+    judge();
+    updateUI();
+    checkOutOfMedals();
   }
 };
+
+// ===== メダル購入画面 =====
+function openShop(forced){
+  noMedalEl.classList.toggle('hidden', !forced);
+  shopClose.classList.toggle('hidden', forced);   // メダル切れの時は買うまで閉じられない
+  thanksEl.textContent = '';
+  ownedEl.textContent = `所持メダル：${medals.toLocaleString()}枚（うち有償メダル 0枚）`;
+  shopBg.classList.remove('hidden');
+}
+function closeShop(){
+  shopBg.classList.add('hidden');
+}
+function checkOutOfMedals(){
+  if(medals < MIN_BET) openShop(true);
+}
+
+buyOpenBtn.onclick = () => { if(!spinning) openShop(false); };
+shopClose.onclick = closeShop;
+shopBg.addEventListener('click', e => {
+  if(e.target === shopBg && !shopClose.classList.contains('hidden')) closeShop();
+});
+
+document.querySelectorAll('.shop-item').forEach(item => {
+  item.onclick = () => {
+    const amount = Number(item.dataset.amount);
+    setMedals(medals + amount);
+    noMedalEl.classList.add('hidden');
+    shopClose.classList.remove('hidden');
+    ownedEl.textContent = `所持メダル：${medals.toLocaleString()}枚（うち有償メダル 0枚）`;
+    thanksEl.textContent = `メダル${amount}枚を 0円 でお買い上げいただきました。`;
+  };
+});
+
+updateUI();
 </script>
 
 </body>
