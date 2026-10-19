@@ -95,14 +95,9 @@
     /* 画面幅に合わせて縮む(最大220px) */
     width:min(220px, calc((100vw - 32px - var(--gap) * 2) / 3));
     aspect-ratio:1 / 1;
-    border:2px solid #333;
-    border-radius:8px;
     overflow:hidden;
     position:relative;
     background:#fff;
-  }
-  .reel-window.active{
-    border-color:#c81e2c;
   }
   .reel-window img{
     position:absolute;
@@ -200,7 +195,6 @@
   /* ===== スマホ ===== */
   @media (max-width:600px){
     .reels{ --gap:8px; }
-    .reel-window{ border-radius:6px; }
     .status{ gap:10px; }
     .medals{ font-size:18px; }
     .medals b{ font-size:26px; }
