@@ -146,6 +146,31 @@
     cursor:default;
   }
 
+  /* ===== デバッグ(?debug付きの時だけ表示) ===== */
+  .debug{
+    position:fixed;
+    left:8px; bottom:8px;
+    display:flex;
+    flex-direction:column;
+    gap:4px;
+    background:rgba(255,255,255,0.9);
+    border:1px dashed #999;
+    border-radius:6px;
+    padding:6px;
+    font-size:11px;
+    z-index:5;
+  }
+  .debug button{
+    font:inherit;
+    font-size:12px;
+    padding:4px 8px;
+    border:1px solid #666;
+    background:#fff;
+    border-radius:4px;
+    cursor:pointer;
+  }
+  .debug button.armed{ background:#c81e2c; color:#fff; border-color:#c81e2c; }
+
   /* ===== スマホ ===== */
   @media (max-width:600px){
     .reels{ --gap:8px; }
@@ -273,6 +298,14 @@
   <button id="stopBtn" class="hidden"><img src="assets/stop.png" alt="STOP"></button>
 </div>
 
+<!-- デバッグ(URL末尾に ?debug を付けた時だけ表示) -->
+<div class="debug hidden" id="debugPanel">
+  <span>DEBUG</span>
+  <button id="dbg777">次は777</button>
+  <button id="dbgSmall">次は小役</button>
+  <button id="dbgZero">メダル0枚</button>
+</div>
+
 <!-- メダル購入画面 -->
 <div class="shop-bg hidden" id="shopBg">
   <div class="shop">
@@ -342,6 +375,7 @@ const finalDigits = [null, null, null];
 let nextToStop = 0;   // 次にSTOPで止まる予定のリール番号
 let spinning = false;
 let ready = false;
+let forcedDigit = null;   // デバッグ用：次の回転で止める目(nullなら通常)
 
 // ===== 保存まわり =====
 function loadNumber(key, fallback){
@@ -427,6 +461,7 @@ function stopReelSpin(idx){
   clearInterval(timers[idx]);
   timers[idx] = null;
   reelEls[idx].classList.remove('active');
+  if(forcedDigit !== null) showFrame(idx, forcedDigit);   // デバッグ：止まる目を固定
   finalDigits[idx] = frameIndices[idx] % 10;
 }
 
@@ -478,9 +513,39 @@ stopBtn.onclick = () => {
     stopBtn.classList.add('hidden');
     startBtn.classList.remove('hidden');
     judge();
+    setForced(null);
     updateUI();
     checkOutOfMedals();
   }
+};
+
+// ===== デバッグ =====
+const debugPanel = document.getElementById('debugPanel');
+const dbg777 = document.getElementById('dbg777');
+const dbgSmall = document.getElementById('dbgSmall');
+const DEBUG = new URLSearchParams(location.search).has('debug');
+if(DEBUG) debugPanel.classList.remove('hidden');
+
+function setForced(d, btn){
+  forcedDigit = d;
+  dbg777.classList.toggle('armed', btn === dbg777);
+  dbgSmall.classList.toggle('armed', btn === dbgSmall);
+}
+dbg777.onclick = () => {
+  if(spinning) return;
+  forcedDigit === 7 ? setForced(null) : setForced(7, dbg777);
+};
+dbgSmall.onclick = () => {
+  if(spinning) return;
+  if(dbgSmall.classList.contains('armed')) return setForced(null);
+  let d;
+  do{ d = Math.floor(Math.random() * 10); }while(d === 7);
+  setForced(d, dbgSmall);
+};
+document.getElementById('dbgZero').onclick = () => {
+  if(spinning) return;
+  setMedals(0);
+  checkOutOfMedals();
 };
 
 // ===== メダル購入画面 =====
