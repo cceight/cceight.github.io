@@ -80,14 +80,14 @@ button:focus-visible,.btn:focus-visible{outline:2px solid var(--paper);outline-o
 #stand img{height:100%;width:auto;max-width:100%;object-fit:contain;object-position:bottom;
   filter:drop-shadow(0 6px 18px rgba(0,0,0,.6));transition:filter .25s,transform .25s;transform-origin:bottom center;}
 #stand.dim img{filter:brightness(.45) drop-shadow(0 6px 18px rgba(0,0,0,.6));transform:scale(.96);}
-#stand.crowd{left:max(16px,env(safe-area-inset-left,0px));justify-content:center;height:min(30vh,240px);}
-#stand.crowd img{flex:1 1 0;min-width:0;}
+#stand.crowd{left:max(16px,env(safe-area-inset-left,0px));justify-content:center;max-width:none;}
+#stand.crowd img{flex:none;max-width:none;height:calc(100% * var(--s,1));}
 
 /* 会場テロップ */
 #telop{position:absolute;inset:0;display:grid;place-items:center;pointer-events:none;}
 #telop div{font-family:var(--f-display);font-weight:800;font-size:clamp(28px,8vw,52px);color:var(--paper);
   background:var(--panel);border-block:2px solid var(--kaya);padding:14px 32px;letter-spacing:.12em;text-align:center;
-  animation:telop 2.2s ease forwards;}
+  white-space:nowrap;animation:telop 2.2s ease forwards;}
 @keyframes telop{0%{opacity:0;letter-spacing:.6em;}20%{opacity:1;letter-spacing:.12em;}80%{opacity:1;}100%{opacity:0;}}
 
 /* 暗転 */
@@ -200,10 +200,10 @@ const pt = (i, j) => [G0 + i * SP, G0 + j * SP];
 /* ---------- 対局データ ---------- */
 const A = '実況のおねーさん', ana = t => ({ who: 'ana', t }), op = t => ({ who: 'opp', t }), c = (who, t) => ({ who, t });
 const CHARS = {
-  kawaguchi: { name: '川口', img: 'img/kawaguchi.png' }, hidaka: { name: '日高', img: 'img/hidaka.png' },
+  kawaguchi: { name: '川口', img: 'img/kawaguchi.png' }, hidaka: { name: '日高', img: 'img/hidaka.png', s: .82 },
   sagimiya: { name: '鷺宮', img: 'img/sagimiya.png' }, arashiyama: { name: '嵐山', img: 'img/arashiyama.png' },
-  omiyain: { name: '大宮院', img: 'img/omiyain.png' }, igoronaku: { name: 'イゴーロナク', img: 'img/igoronaku.png' },
-  goisagi: { name: 'ゴイサギ', img: 'img/goisagi.png' }, all: { name: 'みんな', crowd: true },
+  omiyain: { name: '大宮院', img: 'img/omiyain.png' }, igoronaku: { name: 'イゴーロナク', img: 'img/igoronaku.png', s: 1.1 },
+  goisagi: { name: 'ゴイサギ', img: 'img/goisagi.png', s: .55 }, all: { name: 'みんな', crowd: true },
 };
 const HOSHI = [3, 9, 15];
 const tsuruyoku = (() => { // 鶴翼の陣：黒側に向けて翼を開くV字
@@ -480,13 +480,24 @@ function say(lines, done) {
   queue = lines.slice(); dlgDone = done; nextLine();
 }
 let lastChar = null;
-Object.values(CHARS).forEach(ch => { if (ch.img) { const im = new Image(); im.src = ch.img; } });
+const IMGS = {};
+Object.values(CHARS).forEach(ch => { if (ch.img) { const im = new Image(); im.src = ch.img; IMGS[ch.img] = im; } });
+function fitCrowd() { // 全員の高さをそろえ、画面幅に収まるよう列ごと縮める
+  const el = $('stand'); if (el.hidden || !el.classList.contains('crowd')) return;
+  let H = Math.min(innerHeight * .34, 280), total = 0;
+  Object.values(CHARS).filter(x => x.img).forEach(ch => { const im = IMGS[ch.img], a = im.naturalWidth ? im.naturalWidth / im.naturalHeight : .45; total += a * (ch.s || 1); });
+  const avail = el.parentElement.clientWidth - 32 - 4 * 6;
+  if (total * H > avail) H = avail / total;
+  el.style.height = Math.floor(H) + 'px';
+}
+addEventListener('resize', fitCrowd);
 function showStand(key, dim) {
   const el = $('stand'), ch = CHARS[key];
   if (!ch) { el.hidden = true; return; }
-  const imgs = ch.crowd ? Object.values(CHARS).filter(x => x.img).map(x => x.img) : [ch.img];
-  if (el.dataset.key !== key) { el.innerHTML = imgs.map(src => `<img src="${src}" alt="">`).join(''); el.dataset.key = key; }
+  const list = ch.crowd ? Object.values(CHARS).filter(x => x.img) : [ch];
+  if (el.dataset.key !== key) { el.innerHTML = list.map(x => `<img src="${x.img}" alt="" style="--s:${ch.crowd ? (x.s || 1) : 1}">`).join(''); el.dataset.key = key; }
   el.className = (ch.crowd ? 'crowd' : '') + (dim ? ' dim' : ''); el.hidden = false;
+  if (ch.crowd) fitCrowd(); else el.style.height = '';
 }
 function nextLine() {
   if (!queue.length) { $('dlg').hidden = true; $('stand').hidden = true; const d = dlgDone; dlgDone = null; d && d(); return; }
@@ -513,7 +524,10 @@ function startStage(ix) {
   lastChar = st.who; state = 'talk';
   if (st.venue) {
     $('telopTxt').textContent = '〜' + st.venue + '〜'; $('telop').hidden = false;
-    const d = $('telopTxt'); d.style.animation = 'none'; void d.offsetWidth; d.style.animation = '';
+    const d = $('telopTxt'); d.style.animation = 'none'; d.style.fontSize = '';
+    let fs = parseFloat(getComputedStyle(d).fontSize); const avail = innerWidth - 32;
+    while (d.offsetWidth > avail && fs > 14) { fs -= 1; d.style.fontSize = fs + 'px'; }
+    void d.offsetWidth; d.style.animation = '';
     setTimeout(() => { $('telop').hidden = true; say(st.intro, oppMove); }, 2200);
   } else say(st.intro, oppMove);
 }
