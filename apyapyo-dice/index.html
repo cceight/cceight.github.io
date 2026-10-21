@@ -548,13 +548,23 @@ const FW=cv.width, FH=cv.height;
 const KW=46, KH=26; // 仔ピャピョ（親の縮小版）
 let liftOn=false;
 let critters=[];
+// 表示数：24匹までは実数、そこから1億匹まで対数で226段階、最大250匹
+function shownCount(n){ if(n<=24) return Math.floor(n); if(n>=1e8) return 250; return Math.round(24+226*Math.log(n/24)/Math.log(1e8/24)); }
+let critScale=1;
 function syncCritters(){
-  const n=total(); const show=Math.min(24,Math.floor(n));
-  const want={};
-  S.groups.forEach((g,i)=>{ let k=n>0?Math.round(show*g.n/n):0; if(g.n>=1&&k===0) k=1; want[i]=Math.min(k,Math.ceil(g.n)); });
+  const n=total(); const show=shownCount(n);
+  critScale=show<=24?1:Math.sqrt(24/show); // 埋まり具合がほぼ一定になる縮み方（250匹で約1/3）
+  const want={}; let sum=0;
+  S.groups.forEach((g,i)=>{ if(!(g.n>=1)){ want[i]=0; return; }
+    let k=n>0?Math.round(show*g.n/n):0; const mn=Math.min(3,Math.floor(g.n)); k=Math.max(k,mn); want[i]=Math.min(k,Math.ceil(g.n)); sum+=want[i]; });
+  // 最低数の上乗せで上限を超えた分は、一番多い種類から削る
+  if(sum>show&&show>0){ let ex=sum-show; const order=Object.keys(want).sort((x,y)=>want[y]-want[x]);
+    for(const i of order){ const g=S.groups[i]; const mn=Math.min(3,Math.floor(g.n)); const cut=Math.min(ex,Math.max(0,want[i]-mn)); want[i]-=cut; ex-=cut; if(!ex) break; } }
   const have={}; critters.forEach(c=>have[c.g]=(have[c.g]||0)+1);
   critters=critters.filter(c=>{ if(!(c.g in want)) return false; if(have[c.g]>want[c.g]){have[c.g]--;return false} return true; });
-  for(const [gi,k] of Object.entries(want)){ let h=critters.filter(c=>c.g==gi).length; while(h<k){ critters.push({g:+gi,x:R()*(FW-KW),y:4+R()*(FH-KH-60),vx:(R()<.5?-1:1)*(0.15+R()*0.35),s:R()*9}); h++; } }
+  const w=KW*critScale, h=KH*critScale;
+  for(const c of critters){ c.x=Math.min(c.x,FW-w); }
+  for(const [gi,k] of Object.entries(want)){ let hv=critters.filter(c=>c.g==gi).length; while(hv<k){ critters.push({g:+gi,x:R()*(FW-w),y:4+R()*Math.max(4,FH-h-46),vx:(R()<.5?-1:1)*(0.15+R()*0.35)*(0.6+0.4*critScale),s:R()*9}); hv++; } }
   critters.sort((a,b)=>a.y-b.y);
 }
 let fieldBg='#f7f5f2';
@@ -626,9 +636,10 @@ function frame(t){
       if(!liftOn) drawSprite(spriteFor({kind:'adult'},t,0),FW/2-w/2,FH-h-4-Math.abs(Math.sin(t/400))*3,w,h,false);
       if(n>=GCAP && ((t/140|0)%10===0)){ ctx.fillStyle='rgba(111,211,224,.85)'; ctx.fillRect(0,Math.round(FH-4-h*0.7),Math.round(FW/2-w/2+10),6); }
     } else {
-      critters.forEach(c=>{ c.x+=c.vx; if(c.x<0||c.x>FW-KW){c.vx*=-1} if(R()<.003) c.vx*=-1;
+      const cs=critScale, cw=Math.max(8,Math.round(KW*cs)), ch=Math.max(5,Math.round(KH*cs)), ms=Math.max(14,Math.round(57*cs));
+      critters.forEach(c=>{ c.x+=c.vx; if(c.x<0||c.x>FW-cw){c.vx*=-1} if(R()<.003) c.vx*=-1;
         const g=S.groups[c.g]; if(!g) return; const sp=spriteFor(g,t,c.s);
-        if(g.kind==='mbti'&&mbtiMini[g.name]){ ctx.imageSmoothingEnabled=true; drawSprite(sp,c.x-4,c.y-31,57,57,c.vx>0); ctx.imageSmoothingEnabled=false; } else drawSprite(sp,c.x,c.y,KW,KH,c.vx>0); });
+        if(g.kind==='mbti'&&mbtiMini[g.name]){ ctx.imageSmoothingEnabled=true; drawSprite(sp,c.x+(cw-ms)/2,c.y+ch-ms,ms,ms,c.vx>0); ctx.imageSmoothingEnabled=false; } else drawSprite(sp,c.x,c.y,cw,ch,c.vx>0); });
       drawGolems(t);
       if(!liftOn){ let sp=spriteFor({kind:'adult'},t,0); if(evo.on){ const el=performance.now()-evo.t0; const per=Math.max(70,420-el*0.25); if(Math.floor(el/per)%2===0) sp=whiteOf(SPR.adult); }
         drawSprite(sp,Math.round(FW/2-AW/2),FH-AH-4+Math.round(Math.abs(Math.sin(t/300))*2),AW,AH,false); }
@@ -649,9 +660,10 @@ function syncGolems(){ const want=Math.min(S.golems||0,12); while(golemWalkers.l
 function drawGolems(t){
   if(!GOLEM_IMG.complete||!GOLEM_IMG.naturalWidth) return;
   ctx.imageSmoothingEnabled=true;
-  for(const gw of golemWalkers){ gw.x+=gw.vx; if(gw.x<0||gw.x>FW-36) gw.vx*=-1; if(R()<.004) gw.vx*=-1;
-    const bob=Math.abs(Math.sin(t/160+gw.ph))*3; const tilt=Math.sin(t/160+gw.ph)*0.08;
-    ctx.save(); ctx.translate(gw.x+18,gw.y+18-bob); ctx.rotate(tilt); if(gw.vx<0) ctx.scale(-1,1); ctx.drawImage(GOLEM_IMG,-18,-18,36,36); ctx.restore(); }
+  const gs=Math.max(12,Math.round(36*critScale)), hg=gs/2;
+  for(const gw of golemWalkers){ gw.x+=gw.vx; if(gw.x<0||gw.x>FW-gs) gw.vx*=-1; if(R()<.004) gw.vx*=-1;
+    const bob=Math.abs(Math.sin(t/160+gw.ph))*3*critScale; const tilt=Math.sin(t/160+gw.ph)*0.08;
+    ctx.save(); ctx.translate(gw.x+hg,gw.y+hg-bob); ctx.rotate(tilt); if(gw.vx<0) ctx.scale(-1,1); ctx.drawImage(GOLEM_IMG,-hg,-hg,gs,gs); ctx.restore(); }
   ctx.imageSmoothingEnabled=false;
 }
 // 本家 hopGolem の動き：ポンと出て、跳ねて、きょろきょろ、くるっと向き直ってトコトコ歩く
