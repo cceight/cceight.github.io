@@ -135,7 +135,7 @@ button:active{background:#f2f2f2}
 
   <section id="practice" class="screen">
     <div class="p-head">
-      <div>正解 <b id="pOk">0</b> / <span id="pTotal">0</span> 問　連続 <b id="pStreak">0</b></div>
+      <div></div>
       <button class="p-quit" id="pQuit">やめる</button>
     </div>
     <div class="p-img">
@@ -506,7 +506,6 @@ button:active{background:#f2f2f2}
     }
     for (const k of "ABCDEF") pKeys[k].disabled = !ansIsHex();
     pr.input = ""; pRender();
-    $("pOk").textContent = pr.ok; $("pTotal").textContent = pr.total; $("pStreak").textContent = pr.streak;
   }
   function pRender() {
     let h = "";
@@ -533,7 +532,7 @@ button:active{background:#f2f2f2}
 
     $("pVerdict").className = ok ? "ok" : "ng";
     $("pVerdict").textContent = ok ? "正解！" : `ざんねん、正解は ${correct}`;
-    $("pYours").textContent = ok ? (pr.streak >= 3 ? `${pr.streak}連続正解` : "") : `あなたの答え ${mine}`;
+    $("pYours").textContent = ok ? "" : `あなたの答え ${mine}`;
     if (pr.dir === "h2d") {
       $("pExplain").innerHTML = `${hex2(pr.n)} = ${digitLabel(hi)}×16 + ${digitLabel(lo)}<br>= ${hi * 16} + ${lo} = ${pr.n}`;
     } else {
