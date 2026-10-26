@@ -1,0 +1,592 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>カラーコード当て</title>
+<style>
+:root{--ink:#1a1a1a;--sub:#777;--line:#ddd;--danger:#d33}
+*{box-sizing:border-box;margin:0;padding:0}
+[hidden]{display:none!important}
+html,body{height:100%;background:#fff;color:var(--ink);font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;-webkit-tap-highlight-color:transparent}
+body{display:flex;justify-content:center}
+#app{width:100%;max-width:440px;min-height:100dvh;display:flex;flex-direction:column;padding:12px 16px calc(16px + env(safe-area-inset-bottom));user-select:none;-webkit-user-select:none}
+.mono{font-family:ui-monospace,"SF Mono",Menlo,Consolas,"Roboto Mono",monospace}
+.screen{display:none;flex:1;flex-direction:column}
+.screen.on{display:flex}
+button{font:inherit;color:inherit;border:1px solid var(--line);background:#fff;border-radius:10px;cursor:pointer;touch-action:manipulation}
+button:active{background:#f2f2f2}
+.btn-main{display:block;width:100%;padding:16px;font-size:18px;font-weight:700;background:var(--ink);color:#fff;border:none}
+.btn-main:active{background:#444}
+.btn-main:disabled{background:#ccc;cursor:default}
+.btn-sub{display:block;width:100%;padding:14px;font-size:16px}
+
+/* タイトル */
+.title-body{flex:1;display:flex;flex-direction:column;justify-content:center;gap:22px}
+.logo{font-size:46px;font-weight:800;line-height:1.05;letter-spacing:.02em}
+.logo-sub{font-size:16px;color:var(--sub);margin-top:6px}
+.chips{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.chip div{height:44px;border-radius:8px}
+.chip span{display:block;font-size:12px;color:var(--sub);margin-top:4px}
+.rules{font-size:14px;line-height:1.85;color:#444;padding-left:1.2em}
+.bottom{display:flex;flex-direction:column;gap:10px;margin-top:16px}
+.best{text-align:center;color:var(--sub);font-size:14px}
+
+/* ゲーム */
+.hud{display:flex;justify-content:space-between;align-items:baseline;font-size:14px;color:var(--sub)}
+.hud b{font-size:22px;color:var(--ink)}
+.timer{position:relative;height:10px;background:#f4f4f4;border-radius:5px;margin-top:8px;overflow:hidden}
+#timerCap{position:absolute;left:0;top:0;bottom:0;width:100%;background:#e2e2e2;transition:width .4s}
+#timerBar{position:absolute;left:0;top:0;bottom:0;width:100%;background:var(--ink)}
+#timerBar.low{background:var(--danger)}
+.time-row{display:flex;justify-content:space-between;align-items:baseline;margin:6px 0 10px}
+#timeText{font-size:28px;font-weight:700}
+#timeText.low{color:var(--danger)}
+#qText{font-size:15px;font-weight:600}
+.play{flex:1;display:flex;flex-direction:column;gap:10px}
+.frame{border:1px solid var(--line);border-radius:14px;padding:8px;background:#fff}
+.frameA{flex:1;display:flex;min-height:130px}
+#targetSwatch{flex:1;border-radius:8px}
+#codeInput{display:flex;justify-content:center;gap:6px;font-size:30px;font-weight:700;padding:4px 0}
+#codeInput span{width:1.1em;text-align:center;border-bottom:3px solid var(--line);line-height:1.3}
+#codeInput span.cur{border-color:var(--ink)}
+#codeInput span.hash{border:none;color:var(--sub)}
+.keypad{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.keypad button{height:52px;font-size:22px;font-weight:700}
+.row2{display:grid;grid-template-columns:1fr 1.4fr;gap:6px}
+.row2 button{height:56px}
+#targetCode{font-size:clamp(34px,11vw,48px);font-weight:800;text-align:center;letter-spacing:.04em;padding:14px 8px}
+#sv{position:relative;flex:1;min-height:180px;border-radius:10px;touch-action:none;cursor:crosshair;background-image:linear-gradient(to top,#000,rgba(0,0,0,0)),linear-gradient(to right,#fff,rgba(255,255,255,0))}
+#svKnob{position:absolute;width:26px;height:26px;margin:-13px 0 0 -13px;border-radius:50%;border:3px solid #fff;box-shadow:0 0 0 1px rgba(0,0,0,.5),0 1px 4px rgba(0,0,0,.4);pointer-events:none}
+#hue{position:relative;height:36px;border-radius:10px;touch-action:none;cursor:pointer;background:linear-gradient(to right,#f00,#ff0,#0f0,#0ff,#00f,#f0f,#f00)}
+#hueKnob{position:absolute;top:-3px;bottom:-3px;width:14px;margin-left:-7px;border-radius:7px;border:3px solid #fff;box-shadow:0 0 0 1px rgba(0,0,0,.5);pointer-events:none}
+#pickSwatch{border-radius:10px;border:1px solid var(--line)}
+
+/* 結果 */
+.overlay{position:fixed;inset:0;background:rgba(255,255,255,.97);display:flex;align-items:flex-end;justify-content:center;z-index:10}
+.panel{width:100%;max-width:440px;padding:20px 16px calc(16px + env(safe-area-inset-bottom))}
+.rhead{text-align:center;color:var(--sub);font-size:14px;margin-bottom:10px}
+.cmp{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.card{border:1px solid var(--line);border-radius:14px;padding:8px;text-align:center}
+.card .sw{height:150px;border-radius:8px}
+.lbl{font-size:13px;color:var(--sub);margin-top:8px}
+.code{font-size:20px;font-weight:700;margin-top:2px}
+#rVerdict{font-size:30px;font-weight:800;text-align:center;margin:20px 0 10px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);text-align:center;border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:12px 0;margin-bottom:16px}
+.stats small{display:block;font-size:12px;color:var(--sub);margin-bottom:2px}
+.stats span{font-size:20px;font-weight:700}
+#rDmg.dmg{color:var(--danger)}
+#rDmg.heal{color:#1a8a4a}
+#rDmg.none{color:var(--sub)}
+
+/* ゲームオーバー */
+.over-body{flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:8px;text-align:center}
+#overReason{font-size:18px;color:var(--danger);font-weight:700}
+.score{font-size:88px;font-weight:800;line-height:1}
+.score small{font-size:24px;margin-left:4px}
+#newBest{font-size:15px;font-weight:700;min-height:1.4em}
+.last{display:flex;align-items:center;gap:12px;margin-top:20px;border:1px solid var(--line);border-radius:14px;padding:8px 14px 8px 8px}
+.last .sw{width:64px;height:64px;border-radius:8px}
+.last .lbl{margin:0;text-align:left}
+#emojiLine{font-size:18px;letter-spacing:1px;word-break:break-all;text-align:center;margin-top:14px;line-height:1.4}
+.share-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.share-row button{padding:12px;font-size:15px}
+
+/* 練習モード */
+.p-head{display:flex;justify-content:space-between;align-items:center;font-size:14px;color:var(--sub)}
+.p-head b{font-size:20px;color:var(--ink)}
+.p-quit{padding:6px 12px;font-size:13px}
+.p-img{flex:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;margin:8px 0 4px}
+.p-img img{max-height:26dvh;max-width:100%;object-fit:contain;display:block}
+.p-img p{font-size:12px;font-weight:700;text-align:center}
+.p-q{text-align:center;margin:4px 0}
+.p-dir{font-size:13px;color:var(--sub);font-weight:700}
+.p-val{font-size:44px;font-weight:800;line-height:1.1}
+.p-val sub{font-size:16px;color:var(--sub);font-weight:600;margin-left:2px}
+#pInput{display:flex;justify-content:center;gap:6px;font-size:30px;font-weight:700;padding:2px 0 8px}
+#pInput span{width:1.1em;text-align:center;border-bottom:3px solid var(--line);line-height:1.3}
+#pInput span.cur{border-color:var(--ink)}
+#pInput span.unit{border:none;color:var(--sub);font-size:16px;width:auto;align-self:flex-end;line-height:2}
+.keypad button:disabled{color:#ccc;background:#fafafa;cursor:default}
+#pVerdict{font-size:30px;font-weight:800;text-align:center;margin:6px 0 8px}
+#pVerdict.ok{color:#1a8a4a}
+#pVerdict.ng{color:var(--danger)}
+#pYours{text-align:center;color:var(--sub);font-size:14px;min-height:1.3em}
+#pExplain{text-align:center;font-size:20px;font-weight:700;border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:14px 4px;margin:12px 0 16px;line-height:1.6}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <section id="title" class="screen on">
+    <div class="title-body">
+      <div>
+        <div class="logo mono">#COLOR<br>CODE</div>
+        <div class="logo-sub">カラーコード当て</div>
+      </div>
+      <div class="chips" id="chips"></div>
+      <ul class="rules">
+        <li>色を見てコードを打つ問題と、コードを見て色を選ぶ問題がランダムに出るわ</li>
+        <li>最初の制限時間は1問15秒</li>
+        <li>誤差10%を超えると、次からの制限時間が削られていく</li>
+        <li>誤差5%以下なら、制限時間がちょっと回復するわ</li>
+        <li>時間切れでゲームオーバー、生き残った問題数がスコアよ</li>
+      </ul>
+    </div>
+    <div class="bottom">
+      <p class="best" id="titleBest"></p>
+      <button class="btn-main" id="startBtn">スタート</button>
+      <button class="btn-sub" id="practiceBtn">16進数の変換を練習する</button>
+    </div>
+  </section>
+
+  <section id="practice" class="screen">
+    <div class="p-head">
+      <div>正解 <b id="pOk">0</b> / <span id="pTotal">0</span> 問　連続 <b id="pStreak">0</b></div>
+      <button class="p-quit" id="pQuit">やめる</button>
+    </div>
+    <div class="p-img">
+      <img id="pImg" alt="">
+      <p>中学数学もこなせない人間は、毛のない猿に過ぎない</p>
+    </div>
+    <div class="p-q">
+      <div class="p-dir" id="pDir"></div>
+      <div class="p-val mono" id="pVal"></div>
+    </div>
+    <div id="pInput" class="mono"></div>
+    <div class="keypad mono" id="pKeypad"></div>
+    <div class="row2" style="margin-top:6px">
+      <button id="pDel">← 消す</button>
+      <button id="pOkBtn" class="btn-main" disabled>回答</button>
+    </div>
+  </section>
+
+  <section id="game" class="screen">
+    <div class="hud"><div>生存 <b id="hudCount">0</b> 問</div><div id="hudLimit">制限 15.0秒</div></div>
+    <div class="timer"><div id="timerCap"></div><div id="timerBar"></div></div>
+    <div class="time-row"><div id="qText"></div><div id="timeText" class="mono">15.0</div></div>
+
+    <div class="play" id="modeA">
+      <div class="frame frameA"><div id="targetSwatch"></div></div>
+      <div id="codeInput" class="mono"></div>
+      <div class="keypad mono" id="keypad"></div>
+      <div class="row2">
+        <button id="delBtn">← 消す</button>
+        <button id="okA" class="btn-main" disabled>回答</button>
+      </div>
+    </div>
+
+    <div class="play" id="modeB" hidden>
+      <div class="frame mono" id="targetCode"></div>
+      <div id="sv"><div id="svKnob"></div></div>
+      <div id="hue"><div id="hueKnob"></div></div>
+      <div class="row2">
+        <div id="pickSwatch"></div>
+        <button id="okB" class="btn-main">回答</button>
+      </div>
+    </div>
+  </section>
+
+  <section id="over" class="screen">
+    <div class="over-body">
+      <div id="overReason">時間切れ</div>
+      <div class="score mono"><span id="overCount">0</span><small>問</small></div>
+      <div style="color:var(--sub)">生き残った</div>
+      <div id="newBest"></div>
+      <div class="last">
+        <div class="sw" id="lastSwatch"></div>
+        <div>
+          <div class="lbl">最後のお題</div>
+          <div class="code mono" id="lastCode"></div>
+        </div>
+      </div>
+      <div id="emojiLine"></div>
+    </div>
+    <div class="bottom">
+      <div class="share-row">
+        <button id="tweetBtn">Twitterに投稿</button>
+        <button id="copyBtn">結果をコピー</button>
+      </div>
+      <button class="btn-main" id="retryBtn">もう一度</button>
+      <button class="btn-sub" id="toTitleBtn">タイトルへ</button>
+    </div>
+  </section>
+
+</div>
+
+<div class="overlay" id="result" hidden>
+  <div class="panel">
+    <div class="rhead" id="rHead"></div>
+    <div class="cmp">
+      <div class="card"><div class="sw" id="rTarget"></div><div class="lbl">お題</div><div class="code mono" id="rTargetCode"></div></div>
+      <div class="card"><div class="sw" id="rMine"></div><div class="lbl">あなた</div><div class="code mono" id="rMineCode"></div></div>
+    </div>
+    <div id="rVerdict"></div>
+    <div class="stats">
+      <div><small>誤差</small><span class="mono" id="rErr"></span></div>
+      <div><small id="rDmgLbl">ダメージ</small><span class="mono" id="rDmg"></span></div>
+      <div><small>次の制限時間</small><span class="mono" id="rNext"></span></div>
+    </div>
+    <button class="btn-main" id="nextBtn">次へ</button>
+  </div>
+</div>
+
+<div class="overlay" id="pResult" hidden>
+  <div class="panel">
+    <div id="pVerdict"></div>
+    <div id="pYours"></div>
+    <div id="pExplain" class="mono"></div>
+    <button class="btn-main" id="pNext">次へ</button>
+  </div>
+</div>
+
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const HEX = "0123456789ABCDEF";
+  const BASE = 15;              // 初期制限時間(秒)
+  const DMG_PER_PCT = 0.06;     // 誤差10%超過分 1%あたりのダメージ(秒)
+  const SAFE_PCT = 10;          // これ以下はノーダメージ
+  const HEAL_PCT = 5;           // これ以下は回復
+  const HEAL_MAX = 1.0;         // 誤差0%のときの回復量(秒)
+  const MAXD = Math.sqrt(3 * 255 * 255);
+  const BEST_KEY = "patch_colorcode_best";
+  const GAME_URL = "https://cceight.github.io/color-code-quiz/";
+  const HASHTAG = "#カラーコード当て";
+  const PRACTICE_IMG = "practice.jpg";   // 練習モードの画像（差し替えはここだけ）
+  const EMOJI = { heal: "🟩", none: "⬜", dmg: "🟥" };
+
+  const st = { limit: BASE, count: 0, mode: "A", target: null, input: "",
+               h: 0, s: .5, v: .5, running: false, deadline: 0, raf: 0,
+               log: [], donpisha: 0 };
+
+  // ---------- util ----------
+  const rnd = () => Math.floor(Math.random() * 256);
+  const clamp = x => Math.min(1, Math.max(0, x));
+  const toHex = c => "#" + [c.r, c.g, c.b].map(n => n.toString(16).padStart(2, "0")).join("").toUpperCase();
+  const fromHex = h => ({ r: parseInt(h.slice(0, 2), 16), g: parseInt(h.slice(2, 4), 16), b: parseInt(h.slice(4, 6), 16) });
+  const css = c => `rgb(${c.r},${c.g},${c.b})`;
+  function hsv2rgb(h, s, v) {
+    const f = n => { const k = (n + h / 60) % 6; return v - v * s * Math.max(0, Math.min(k, 4 - k, 1)); };
+    return { r: Math.round(f(5) * 255), g: Math.round(f(3) * 255), b: Math.round(f(1) * 255) };
+  }
+  const randColor = () => ({ r: rnd(), g: rnd(), b: rnd() });
+  function loadBest() { try { return +localStorage.getItem(BEST_KEY) || 0; } catch (e) { return 0; } }
+  function saveBest(n) { try { localStorage.setItem(BEST_KEY, String(n)); } catch (e) {} }
+  function show(id) { document.querySelectorAll(".screen").forEach(e => e.classList.toggle("on", e.id === id)); }
+
+  // ---------- タイトル ----------
+  function renderTitle() {
+    const chips = $("chips"); chips.innerHTML = "";
+    for (let i = 0; i < 6; i++) {
+      const c = randColor();
+      const d = document.createElement("div"); d.className = "chip";
+      d.innerHTML = `<div style="background:${css(c)}"></div><span class="mono">${toHex(c)}</span>`;
+      chips.appendChild(d);
+    }
+    const b = loadBest();
+    $("titleBest").textContent = b ? `最高記録 ${b}問` : "";
+    show("title");
+  }
+
+  // ---------- キーボード ----------
+  const keypad = $("keypad");
+  for (const k of HEX) {
+    const b = document.createElement("button"); b.textContent = k;
+    b.addEventListener("click", () => typeKey(k));
+    keypad.appendChild(b);
+  }
+  function typeKey(k) {
+    if (!st.running || st.mode !== "A" || st.input.length >= 6) return;
+    st.input += k; renderInput();
+  }
+  function delKey() {
+    if (!st.running || st.mode !== "A") return;
+    st.input = st.input.slice(0, -1); renderInput();
+  }
+  function renderInput() {
+    let h = '<span class="hash">#</span>';
+    for (let i = 0; i < 6; i++) h += `<span class="${i === st.input.length ? "cur" : ""}">${st.input[i] || ""}</span>`;
+    $("codeInput").innerHTML = h;
+    $("okA").disabled = st.input.length < 6;
+  }
+  $("delBtn").addEventListener("click", delKey);
+  $("okA").addEventListener("click", submit);
+
+  // ---------- ピッカー ----------
+  const sv = $("sv"), hue = $("hue");
+  function renderPicker() {
+    sv.style.backgroundColor = `hsl(${st.h},100%,50%)`;
+    const c = css(hsv2rgb(st.h, st.s, st.v));
+    $("svKnob").style.left = st.s * 100 + "%";
+    $("svKnob").style.top = (1 - st.v) * 100 + "%";
+    $("svKnob").style.background = c;
+    $("hueKnob").style.left = st.h / 360 * 100 + "%";
+    $("pickSwatch").style.background = c;
+  }
+  function bindDrag(el, fn) {
+    el.addEventListener("pointerdown", e => {
+      if (!st.running) return;
+      e.preventDefault();
+      el.setPointerCapture(e.pointerId); fn(e);
+      const mv = ev => { if (st.running) fn(ev); };
+      const up = () => { el.removeEventListener("pointermove", mv); el.removeEventListener("pointerup", up); el.removeEventListener("pointercancel", up); };
+      el.addEventListener("pointermove", mv); el.addEventListener("pointerup", up); el.addEventListener("pointercancel", up);
+    });
+  }
+  bindDrag(sv, e => {
+    const r = sv.getBoundingClientRect();
+    st.s = clamp((e.clientX - r.left) / r.width);
+    st.v = 1 - clamp((e.clientY - r.top) / r.height);
+    renderPicker();
+  });
+  bindDrag(hue, e => {
+    const r = hue.getBoundingClientRect();
+    st.h = Math.min(359.9, clamp((e.clientX - r.left) / r.width) * 360);
+    renderPicker();
+  });
+  $("okB").addEventListener("click", submit);
+
+  // ---------- ゲーム進行 ----------
+  function startGame() {
+    st.limit = BASE; st.count = 0; st.log = []; st.donpisha = 0;
+    show("game"); startQuestion();
+  }
+  function startQuestion() {
+    st.mode = Math.random() < .5 ? "A" : "B";
+    st.target = randColor();
+    $("modeA").hidden = st.mode !== "A";
+    $("modeB").hidden = st.mode !== "B";
+    if (st.mode === "A") {
+      $("qText").textContent = "この色のカラーコードは？";
+      $("targetSwatch").style.background = css(st.target);
+      st.input = ""; renderInput();
+    } else {
+      $("qText").textContent = "このコードの色を選んで";
+      $("targetCode").textContent = toHex(st.target);
+      st.h = Math.random() * 360; st.s = .5; st.v = .5; renderPicker();
+    }
+    $("hudCount").textContent = st.count;
+    $("hudLimit").textContent = `制限 ${st.limit.toFixed(1)}秒`;
+    $("timerCap").style.width = st.limit / BASE * 100 + "%";
+    st.deadline = performance.now() + st.limit * 1000;
+    st.running = true;
+    tick();
+  }
+  function tick() {
+    if (!st.running) return;
+    const rem = Math.max(0, (st.deadline - performance.now()) / 1000);
+    $("timeText").textContent = rem.toFixed(1);
+    $("timerBar").style.width = rem / BASE * 100 + "%";
+    const low = rem < 3;
+    $("timerBar").classList.toggle("low", low);
+    $("timeText").classList.toggle("low", low);
+    if (rem <= 0) { st.running = false; gameOver("時間切れ"); return; }
+    st.raf = requestAnimationFrame(tick);
+  }
+  function verdict(err) {
+    if (err < 2) return "ドンピシャ！";
+    if (err < 5) return "おしい！";
+    if (err < 10) return "いい線いってる";
+    if (err < 20) return "まあまあ";
+    if (err < 35) return "うーん…";
+    return "ぜんぜん違う！";
+  }
+  function submit() {
+    if (!st.running) return;
+    let ans;
+    if (st.mode === "A") { if (st.input.length < 6) return; ans = fromHex(st.input); }
+    else ans = hsv2rgb(st.h, st.s, st.v);
+    st.running = false; cancelAnimationFrame(st.raf);
+
+    const t = st.target;
+    const err = Math.hypot(ans.r - t.r, ans.g - t.g, ans.b - t.b) / MAXD * 100;
+    // 10%超: 超過分だけダメージ / 5〜10%: ノーダメージ / 5%以下: 回復(0%で+1.0秒)
+    let delta = 0;
+    if (err > SAFE_PCT) delta = -(err - SAFE_PCT) * DMG_PER_PCT;
+    else if (err <= HEAL_PCT) delta = (HEAL_PCT - err) / HEAL_PCT * HEAL_MAX;
+    const before = st.limit;
+    st.count++;
+    st.log.push(err > SAFE_PCT ? "dmg" : err <= HEAL_PCT ? "heal" : "none");
+    if (err < 2) st.donpisha++;
+    st.limit = Math.min(BASE, Math.max(0, st.limit + delta));
+    delta = st.limit - before;
+
+    $("rHead").textContent = `第${st.count}問`;
+    $("rTarget").style.background = css(t);
+    $("rTargetCode").textContent = toHex(t);
+    $("rMine").style.background = css(ans);
+    $("rMineCode").textContent = toHex(ans);
+    $("rVerdict").textContent = verdict(err);
+    $("rErr").textContent = err.toFixed(1) + "%";
+    const dEl = $("rDmg");
+    if (err > SAFE_PCT) {
+      $("rDmgLbl").textContent = "ダメージ"; dEl.className = "mono dmg";
+      dEl.textContent = delta.toFixed(1) + "秒";
+    } else if (err <= HEAL_PCT) {
+      $("rDmgLbl").textContent = "回復"; dEl.className = "mono heal";
+      dEl.textContent = "+" + delta.toFixed(1) + "秒";
+    } else {
+      $("rDmgLbl").textContent = "ダメージ"; dEl.className = "mono none";
+      dEl.textContent = "なし";
+    }
+    $("rNext").textContent = st.limit.toFixed(1) + "秒";
+    $("nextBtn").textContent = st.limit <= 0 ? "結果へ" : "次へ";
+    $("result").hidden = false;
+  }
+  function next() {
+    if ($("result").hidden) return;
+    $("result").hidden = true;
+    if (st.limit <= 0) gameOver("制限時間が尽きた");
+    else startQuestion();
+  }
+  function gameOver(reason) {
+    st.running = false; cancelAnimationFrame(st.raf);
+    $("overReason").textContent = reason;
+    $("overCount").textContent = st.count;
+    const best = loadBest();
+    if (st.count > best) { saveBest(st.count); $("newBest").textContent = "最高記録更新！"; }
+    else $("newBest").textContent = best ? `最高記録 ${best}問` : "";
+    $("lastSwatch").style.background = css(st.target);
+    $("lastCode").textContent = toHex(st.target);
+    $("emojiLine").textContent = emojiLine();
+    $("copyBtn").textContent = "結果をコピー";
+    show("over");
+  }
+
+  // ---------- 共有 ----------
+  const emojiLine = () => st.log.map(k => EMOJI[k]).join("");
+  function tweetText() {
+    return `カラーコード当てで${st.count}問生き残った！（ドンピシャ${st.donpisha}回） ${HASHTAG}`;
+  }
+  function copyText() {
+    const line = emojiLine();
+    return `カラーコード当て ${st.count}問生存\n${line ? line + "\n" : ""}${GAME_URL}`;
+  }
+  // click(pointerdownではなく)で開くとスマホでもポップアップがブロックされない
+  $("tweetBtn").addEventListener("click", () => {
+    const url = "https://twitter.com/intent/tweet?text=" + encodeURIComponent(tweetText()) + "&url=" + encodeURIComponent(GAME_URL);
+    window.open(url, "_blank", "noopener");
+  });
+  $("copyBtn").addEventListener("click", async () => {
+    const text = copyText();
+    try { await navigator.clipboard.writeText(text); $("copyBtn").textContent = "コピーした！"; }
+    catch (e) {
+      // clipboard APIが使えない環境向けの予備
+      const ta = document.createElement("textarea"); ta.value = text; ta.style.position = "fixed"; ta.style.opacity = "0";
+      document.body.appendChild(ta); ta.select();
+      let ok = false; try { ok = document.execCommand("copy"); } catch (e2) {}
+      ta.remove();
+      $("copyBtn").textContent = ok ? "コピーした！" : "コピーできなかった…";
+    }
+  });
+
+  // ---------- 練習モード ----------
+  const pr = { dir: "h2d", n: 0, input: "", ok: 0, total: 0, streak: 0, open: false };
+  const pKeypad = $("pKeypad");
+  const pKeys = {};
+  for (const k of HEX) {
+    const b = document.createElement("button"); b.textContent = k;
+    b.addEventListener("click", () => pType(k));
+    pKeypad.appendChild(b); pKeys[k] = b;
+  }
+  const hex2 = n => n.toString(16).toUpperCase().padStart(2, "0");
+  const ansIsHex = () => pr.dir === "d2h";
+  const ansMax = () => ansIsHex() ? 2 : 3;
+
+  function startPractice() {
+    pr.ok = 0; pr.total = 0; pr.streak = 0;
+    if (!$("pImg").getAttribute("src")) $("pImg").src = PRACTICE_IMG;
+    show("practice"); pQuestion();
+  }
+  function pQuestion() {
+    pr.dir = Math.random() < .5 ? "h2d" : "d2h";
+    if (pr.dir === "h2d") {
+      // 必ずA〜Fを1文字以上含む00〜FF
+      do { pr.n = Math.floor(Math.random() * 256); } while (!/[A-F]/.test(hex2(pr.n)));
+      $("pDir").textContent = "16進数 → 10進数";
+      $("pVal").innerHTML = `${hex2(pr.n)}<sub>(16)</sub>`;
+    } else {
+      pr.n = 100 + Math.floor(Math.random() * 156);   // 100〜255
+      $("pDir").textContent = "10進数 → 16進数";
+      $("pVal").innerHTML = `${pr.n}<sub>(10)</sub>`;
+    }
+    for (const k of "ABCDEF") pKeys[k].disabled = !ansIsHex();
+    pr.input = ""; pRender();
+    $("pOk").textContent = pr.ok; $("pTotal").textContent = pr.total; $("pStreak").textContent = pr.streak;
+  }
+  function pRender() {
+    let h = "";
+    for (let i = 0; i < ansMax(); i++) h += `<span class="${i === pr.input.length ? "cur" : ""}">${pr.input[i] || ""}</span>`;
+    h += `<span class="unit">(${ansIsHex() ? 16 : 10})</span>`;
+    $("pInput").innerHTML = h;
+    $("pOkBtn").disabled = ansIsHex() ? pr.input.length < 2 : pr.input.length < 1;
+  }
+  function pType(k) {
+    if (pr.open || pr.input.length >= ansMax()) return;
+    if (!ansIsHex() && /[A-F]/.test(k)) return;
+    pr.input += k; pRender();
+  }
+  function pDel() { if (pr.open) return; pr.input = pr.input.slice(0, -1); pRender(); }
+  const digitLabel = d => d >= 10 ? `${HEX[d]}(${d})` : String(d);
+  function pSubmit() {
+    if (pr.open || $("pOkBtn").disabled) return;
+    const hi = Math.floor(pr.n / 16), lo = pr.n % 16;
+    const correct = ansIsHex() ? hex2(pr.n) : String(pr.n);
+    const mine = ansIsHex() ? pr.input : String(parseInt(pr.input, 10));
+    const ok = mine === correct;
+    pr.total++;
+    if (ok) { pr.ok++; pr.streak++; } else pr.streak = 0;
+
+    $("pVerdict").className = ok ? "ok" : "ng";
+    $("pVerdict").textContent = ok ? "正解！" : `ざんねん、正解は ${correct}`;
+    $("pYours").textContent = ok ? (pr.streak >= 3 ? `${pr.streak}連続正解` : "") : `あなたの答え ${mine}`;
+    if (pr.dir === "h2d") {
+      $("pExplain").innerHTML = `${hex2(pr.n)} = ${digitLabel(hi)}×16 + ${digitLabel(lo)}<br>= ${hi * 16} + ${lo} = ${pr.n}`;
+    } else {
+      $("pExplain").innerHTML = `${pr.n} ÷ 16 = ${hi} あまり ${lo}<br>${hi} → ${HEX[hi]}、${lo} → ${HEX[lo]}　答え ${hex2(pr.n)}`;
+    }
+    pr.open = true;
+    $("pResult").hidden = false;
+  }
+  function pNext() {
+    if (!pr.open) return;
+    pr.open = false; $("pResult").hidden = true;
+    pQuestion();
+  }
+  $("pDel").addEventListener("click", pDel);
+  $("pOkBtn").addEventListener("click", pSubmit);
+  $("pNext").addEventListener("click", pNext);
+  $("pQuit").addEventListener("click", () => { pr.open = false; $("pResult").hidden = true; renderTitle(); });
+  $("practiceBtn").addEventListener("click", startPractice);
+  const inPractice = () => $("practice").classList.contains("on");
+
+  $("startBtn").addEventListener("click", startGame);
+  $("retryBtn").addEventListener("click", startGame);
+  $("toTitleBtn").addEventListener("click", renderTitle);
+  $("nextBtn").addEventListener("click", next);
+
+  // PCのキーボード操作
+  document.addEventListener("keydown", e => {
+    if (inPractice()) {
+      if (pr.open) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); pNext(); } return; }
+      if (e.key === "Enter") { e.preventDefault(); pSubmit(); return; }
+      if (e.key === "Backspace") { e.preventDefault(); pDel(); return; }
+      const pk = e.key.toUpperCase();
+      if (pk.length === 1 && HEX.includes(pk)) pType(pk);
+      return;
+    }
+    if (!$("result").hidden) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); next(); } return; }
+    if (!st.running) return;
+    if (e.key === "Enter") { e.preventDefault(); submit(); return; }
+    if (st.mode !== "A") return;
+    if (e.key === "Backspace") { e.preventDefault(); delKey(); return; }
+    const k = e.key.toUpperCase();
+    if (k.length === 1 && HEX.includes(k)) typeKey(k);
+  });
+
+  renderTitle();
+})();
+</script>
+</body>
+</html>
