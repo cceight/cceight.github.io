@@ -124,6 +124,7 @@ html,body{margin:0;height:100%;background:var(--paper);overflow:hidden;
     <div class="note" id="oBest">ベスト 0マス</div>
   </div>
   <div class="bottom">
+    <button class="btn sub" id="bShare">Twitterに投稿</button>
     <button class="btn main" id="bOTitle">タイトル</button>
   </div>
 </div>
@@ -622,6 +623,12 @@ on('bPause',()=>{if(state==='play'){state='pause';bgmPause();show(pauseL)}});
 on('bResume',()=>{state='play';bgmPlay(false);show(hud)});
 on('bPTitle',toTitle);
 on('bOTitle',toTitle);
+// opens the post composer in a new tab; uses click (not pointerdown) so mobile browsers allow the popup
+$('bShare').addEventListener('click',()=>{
+  const text=CHARS[charIdx].name+'と一緒に'+score+'マス進んだよ！ #わんわんとびいし';
+  const url='https://twitter.com/intent/tweet?text='+encodeURIComponent(text)+'&url='+encodeURIComponent('https://cceight.github.io/tobiishi/');
+  window.open(url,'_blank','noopener');
+});
 addEventListener('keydown',e=>{
   if(e.code==='Space'||e.code==='ArrowUp'||e.code==='KeyW'){e.preventDefault();audio();
     if(state==='play')tryJump();else if(state==='title')start();else if(state==='over')toTitle();}
