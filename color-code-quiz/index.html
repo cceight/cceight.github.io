@@ -238,10 +238,13 @@ button:active{background:#f2f2f2}
   const $ = id => document.getElementById(id);
   const HEX = "0123456789ABCDEF";
   const BASE = 15;              // 初期制限時間(秒)
-  const DMG_PER_PCT = 0.06;     // 誤差10%超過分 1%あたりのダメージ(秒)
+  // ダメージ曲線: −PIVOT_DMG × ((誤差 − 10) ÷ (PIVOT_PCT − 10))^DMG_POW
+  // PIVOT_PCT%で旧直線と同じPIVOT_DMG秒、KILL_PCT%でBASE秒(満タン即死)になるよう指数を決める
+  const PIVOT_PCT = 35, PIVOT_DMG = 1.5, KILL_PCT = 80;
   const SAFE_PCT = 10;          // これ以下はノーダメージ
   const HEAL_PCT = 5;           // これ以下は回復
   const HEAL_MAX = 1.0;         // 誤差0%のときの回復量(秒)
+  const DMG_POW = Math.log(BASE / PIVOT_DMG) / Math.log((KILL_PCT - SAFE_PCT) / (PIVOT_PCT - SAFE_PCT));  // ≈2.24
   const MAXD = Math.sqrt(3 * 255 * 255);
   const BEST_KEY = "patch_colorcode_best";
   const GAME_URL = "https://cceight.github.io/color-code-quiz/";
@@ -394,9 +397,9 @@ button:active{background:#f2f2f2}
 
     const t = st.target;
     const err = Math.hypot(ans.r - t.r, ans.g - t.g, ans.b - t.b) / MAXD * 100;
-    // 10%超: 超過分だけダメージ / 5〜10%: ノーダメージ / 5%以下: 回復(0%で+1.0秒)
+    // 10%超: 曲線ダメージ(80%で即死) / 5〜10%: ノーダメージ / 5%以下: 回復(0%で+1.0秒)
     let delta = 0;
-    if (err > SAFE_PCT) delta = -(err - SAFE_PCT) * DMG_PER_PCT;
+    if (err > SAFE_PCT) delta = -PIVOT_DMG * Math.pow((err - SAFE_PCT) / (PIVOT_PCT - SAFE_PCT), DMG_POW);
     else if (err <= HEAL_PCT) delta = (HEAL_PCT - err) / HEAL_PCT * HEAL_MAX;
     const before = st.limit;
     st.count++;
