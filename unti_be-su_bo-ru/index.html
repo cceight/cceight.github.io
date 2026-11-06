@@ -296,7 +296,7 @@ function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=rnd(i+1);[
 /* ---------- 音 ---------- */
 const SND_DIR='sound/';
 const SE_FILES={start:'se_start.mp3',finish:'se_finish.mp3',cutin:'se_cutin.mp3',summon:'se_summon.mp3',chapter:'se_chapter.mp3'};
-const BGM_FILES={team:'bgm_team.mp3',match:'bgm_match.mp3',boss:'bgm_boss.mp3',creation:'bgm_creation.mp3',park:'bgm_park.mp3'};
+const BGM_FILES={team:'bgm_team.mp3',match:'bgm_match.mp3',boss:'bgm_boss.mp3',creation:'bgm_creation.mp3',park:'bgm_park.mp3',win:'bgm_win.mp3'};
 const BGM_VOL=.45;
 let ac=null;const SE_BUF={};const BGM_EL={};let bgmKey=null,bgmFadeT=null,unlocked=false;
 function audio(){if(!ac){try{ac=new(window.AudioContext||window.webkitAudioContext)()}catch(e){}}if(ac&&ac.state==='suspended')ac.resume();return ac}
@@ -1113,11 +1113,12 @@ async function endMatch(){
    ['j','急にゲームの話しないで。']
   ];
  }
+ if(win)bgm('win');
  for(const [w,t] of L)await say(w,t);
  if(win)showReward();else{S.screen='gameover';render()}
 }
 const KANSUJI=['一','二','三','四','五','六'];
-function chapterCard(idx){se('chapter');return new Promise(res=>{
+function chapterCard(idx){bgmStop(700);se('chapter');return new Promise(res=>{
  const st=STAGES[idx];
  const el=document.createElement('div');el.className='chapter';
  el.innerHTML=`<div class="ch-in"><p class="ch-title">第${KANSUJI[idx]}章　${esc(st.name)}</p>${st.sub?`<p class="ch-sub">〜${esc(st.sub)}〜</p>`:''}</div>`;
