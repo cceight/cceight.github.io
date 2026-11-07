@@ -161,6 +161,8 @@ button{cursor:pointer}
 .logo,.big-logo,.who,.word .w-name,.result,.hud-name,.step,.team-in,.pl-no,.badge,.bd{font-weight:700}
 .dim{position:fixed;inset:0;background:rgba(4,8,6,.66);z-index:15;cursor:pointer}
 .dim.clear{background:transparent}
+.app.ending .dim{background:transparent}
+.dialog.typing .story-next{display:none}
 .app.tut .word:disabled{opacity:1}
 .spot{position:fixed;z-index:16;pointer-events:none;border:3px solid var(--led);border-radius:14px;box-shadow:0 0 0 9999px rgba(4,8,6,.74),0 0 18px rgba(255,204,51,.55);transition:left .2s,top .2s,width .2s,height .2s}
 .dialog{z-index:17}
@@ -630,11 +632,18 @@ function choose(choices){
   box.onclick=e=>{const b=e.target.closest('button');if(!b)return;box.remove();setWaiting(false);res(+b.dataset.i)};
  });
 }
+async function typeOut(){
+ const t=$('#telop'),p=t&&t.querySelector('p');if(!p)return;
+ const full=p.textContent;t.classList.add('typing');p.textContent='';
+ for(const ch of full){p.textContent+=ch;await sleep('。、！？…'.includes(ch)?260:80)}
+ await sleep(600);t.classList.remove('typing');
+}
 async function say(who,text,wait,spot,big){
  text=punct(text);
  S.log.push({who,text,big:!!big});if(S.log.length>80)S.log.splice(0,S.log.length-80);renderLog();
  if(S.screen!=='battle'){await sleep(wait||300);return}
  SPOT=spot||null;placeSpot();
+ if(S.typeMode)await typeOut();
  await new Promise(r=>{let done=false;const go=()=>{if(done)return;done=true;sayNext=null;SPOT=null;placeSpot();setWaiting(false);r()};sayNext=go;setWaiting(true)});
 }
 
@@ -1166,6 +1175,7 @@ async function ending(){
  await say('k','たしかに。');
  await say('my','選択肢にすらならなかった。ミスったな。');
  await B('野球・戦争・飢餓・差別・独裁・災害・感染症・癌・社会保険料が初めから存在しなかったことになる宇宙を創る。');
+ await sleep(1000);
  await say('j','監督さん、ありがとう…。');
  await B('これを、次の宇宙に持っていってほしい。');
  await say('k','これは…！');
@@ -1176,6 +1186,8 @@ async function ending(){
  const fw=document.querySelector('.fwhite');if(fw)fw.remove();
  bgm('park');
  await veil('swhite',false,1600);
+ await sleep(1000);
+ S.typeMode=true;
  await say('k','あら、そのノート、まだ持っていたのね。');
  await say('j','解説のおねーさん！お久しぶりです！');
  await say('kid','打ったぞー！走れ走れー！');
@@ -1192,6 +1204,7 @@ async function ending(){
  await say('k','子供たちは夢中でボールを追いかけて、綺麗な青空が目に染みるわ。');
  await say('k','この青空を守ったのは、果たして誰なんでしょうか…。');
  await say('k','ねえ、監督。');
+ S.typeMode=false;
  bgmStop(1700);
  await veil('sblack',true,1800);
  S.ending=false;F.mode=null;S.screen='fin';render();
