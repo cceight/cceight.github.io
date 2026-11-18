@@ -1022,11 +1022,11 @@
     const LIMIT = 280 - 24; // URL(23) + 改行
     if (items.length === 1) {
       let t = cut(items[0].title, 60), s;
-      while (xlen(s = `Wikiガチャで記事を引いた\n${TAG[items[0].rarity]}『${t}』`) > LIMIT) t = cut([...t].slice(0, -2).join(''), 999);
+      while (xlen(s = `#Wikiガチャ で記事を引いた\n${TAG[items[0].rarity]}『${t}』`) > LIMIT) t = cut([...t].slice(0, -2).join(''), 999);
       return s;
     }
     const sorted = items.map((it, i) => ({ it, i })).sort((a, b) => RANK[b.it.rarity] - RANK[a.it.rarity] || a.i - b.i).map(o => o.it);
-    let s = 'Wikiガチャで10連記事を引いた', used = 0;
+    let s = '#Wikiガチャ で10連記事を引いた', used = 0;
     for (const it of sorted) {
       const line = `\n${TAG[it.rarity]}『${cut(it.title, 24)}』`;
       if (xlen(s + line) + 2 > LIMIT) break;
