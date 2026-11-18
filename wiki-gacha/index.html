@@ -177,6 +177,28 @@
   .mini.C { background: linear-gradient(120deg, #efe5cf, #d9cbad, #efe5cf); }
   .mini.C .in { background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .45 0 0 0 0 .38 0 0 0 0 .25 0 0 0 .09 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"), #f7f0de; }
   .mini.C .b { background: #bfae8a; }
+  #foot #logBtn { font-size: 13px; color: #fff; }
+  #log { position: absolute; inset: 0; z-index: 9; display: none; align-items: stretch; justify-content: center; background: #05060c; padding: 4vh 3vw 3vh; }
+  #log .lbox { width: min(100%, 560px); display: flex; flex-direction: column; min-height: 0; }
+  #log .lhead { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 10px; }
+  #log h3 { font-size: 20px; letter-spacing: .1em; } #logCount { font-size: 12px; color: rgba(255,255,255,.55); }
+  #logSort { display: flex; gap: 6px; margin-bottom: 10px; }
+  #logSort button { flex: 1; padding: 8px 4px; font-size: 13px; background: rgba(255,255,255,.12); color: #fff; box-shadow: none; }
+  #logSort button.on { background: #fff; color: #111; }
+  #logList { flex: 1; overflow-y: auto; border-top: 1px solid rgba(255,255,255,.15); -webkit-overflow-scrolling: touch; }
+  #logList .empty { padding: 40px 0; text-align: center; color: rgba(255,255,255,.5); font-size: 14px; }
+  .lrow { display: flex; align-items: center; gap: 8px; padding: 10px 2px; border-bottom: 1px solid rgba(255,255,255,.1); }
+  .lrow.read .lmid a { color: rgba(255,255,255,.5); }
+  .ltag { flex: none; width: 40px; text-align: center; font-size: 11px; font-weight: 900; padding: 3px 0; border-radius: 999px; color: #fff; }
+  .ltag.UR { background: linear-gradient(90deg, #ff4d6d, #ffb84d, #4dff88, #4dd8ff, #8a4dff); }
+  .ltag.SSR { background: #2fa8ff; } .ltag.SR { background: #c8901e; } .ltag.R { background: #8d98a5; } .ltag.UC { background: #a85f28; }
+  .ltag.C { background: #d9cbad; color: #5a4b2e; }
+  .lmid { flex: 1; min-width: 0; }
+  .lmid a { display: block; color: #fff; text-decoration: none; font-size: 14px; line-height: 1.35; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .ldate { font-size: 10.5px; color: rgba(255,255,255,.45); margin-top: 2px; }
+  .lchk { flex: none; display: flex; align-items: center; gap: 2px; font-size: 12px; color: rgba(255,255,255,.75); }
+  .lchk input { width: 18px; height: 18px; accent-color: #ffd36b; }
+  #logClose { margin: 12px auto 0; }
 </style>
 </head>
 <body>
@@ -214,8 +236,14 @@
 </div>
 <div id="hint"><div class="logo">Wikiガチャ</div><div class="sub">Wikipediaの記事が出るガチャ</div></div>
 <div id="ui"><button id="share" class="sharebtn">結果をポストする</button><button id="one" disabled>読み込み中…</button><button id="tenBtn" class="ten" disabled>読み込み中…</button></div>
-<div id="foot"><button id="creditBtn">クレジット</button><span>※点滅する演出があります</span></div>
+<div id="foot"><button id="logBtn">ログ</button><button id="creditBtn">クレジット</button><span>※点滅する演出があります</span></div>
 <div id="loading"></div>
+<div id="log"><div class="lbox">
+  <div class="lhead"><h3>ログ</h3><span id="logCount"></span></div>
+  <div id="logSort"><button data-s="rare">レア度</button><button data-s="date">引いた日付</button><button data-s="fav">お気に入り</button></div>
+  <div id="logList"></div>
+  <button id="logClose">閉じる</button>
+</div></div>
 <div id="credit"><div class="box">
   <h3>クレジット</h3>
   <p>記事の文章：Wikipedia日本語版の各記事（CC BY-SA 4.0）。各記事の出典はカードと記事リンクに表示しています。</p>
@@ -936,7 +964,7 @@
   $('one').addEventListener('click', async () => {
     unlockAudio(); ten = null; stopBgm();
     const items = await fetchItems(1, false); if (!items) return;
-    lastResult = items; startRun(items[0].rarity, items[0]);
+    lastResult = items; addLog(items); startRun(items[0].rarity, items[0]);
   });
 
   // ---------- 10連 ----------
@@ -947,7 +975,7 @@
     if (!items.some(i => RANK[i.rarity] >= 3)) { // SR1個以上確定
       try { const g = await details(await drawMany(1, true)); items[9] = g[0]; } catch (e) {}
     }
-    lastResult = items;
+    lastResult = items; addLog(items);
     const maxNoUR = Math.max(...items.filter(i => i.rarity !== 'UR').map(i => RANK[i.rarity]));
     ten = { items, seq: items.map(i => i.rarity), i: -1, steps: ['silver'].concat(maxNoUR >= 3 ? ['gold'] : []).concat(maxNoUR >= 4 ? ['blue'] : []) };
     OT.end = ten.steps.length * 600 + 250;
@@ -1014,6 +1042,54 @@
   }
   $('share').addEventListener('click', openPost);
   $('listShare').addEventListener('click', openPost);
+
+  // ---------- ログ ----------
+  const LOG_KEY = 'wg_log', LOG_MAX = 1000;
+  function loadLog() { try { return JSON.parse(localStorage.getItem(LOG_KEY) || '[]'); } catch (e) { return []; } }
+  function saveLog(a) { try { localStorage.setItem(LOG_KEY, JSON.stringify(a)); } catch (e) {} }
+  function addLog(items) {
+    const log = loadLog(), now = Date.now();
+    items.forEach((it, k) => {
+      const t = now + k, e = log.find(x => x.title === it.title);
+      if (e) { e.at = t; e.rarity = it.rarity; e.url = it.url || e.url; }
+      else log.push({ title: it.title, rarity: it.rarity, url: it.url, at: t, read: false, fav: false });
+    });
+    if (log.length > LOG_MAX) {
+      const drop = log.filter(x => !x.fav).sort((a, b) => a.at - b.at).slice(0, log.length - LOG_MAX);
+      const del = new Set(drop); saveLog(log.filter(x => !del.has(x))); return;
+    }
+    saveLog(log);
+  }
+  let logSort = 'date';
+  const fmt = t => { const d = new Date(t); return `${d.getFullYear()}/${d.getMonth() + 1}/${d.getDate()} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`; };
+  function renderLog() {
+    const log = loadLog(), list = $('logList');
+    const sorted = log.slice().sort(logSort === 'rare' ? (a, b) => RANK[b.rarity] - RANK[a.rarity] || b.at - a.at
+      : logSort === 'fav' ? (a, b) => (b.fav - a.fav) || b.at - a.at : (a, b) => b.at - a.at);
+    $('logCount').textContent = `${log.length} / ${LOG_MAX}件`;
+    document.querySelectorAll('#logSort button').forEach(b => b.classList.toggle('on', b.dataset.s === logSort));
+    list.innerHTML = '';
+    if (!sorted.length) { list.innerHTML = '<div class="empty">まだ記事を引いていません</div>'; return; }
+    const frag = document.createDocumentFragment();
+    sorted.forEach(e => {
+      const row = document.createElement('div'); row.className = 'lrow' + (e.read ? ' read' : '');
+      const tag = document.createElement('span'); tag.className = 'ltag ' + e.rarity; tag.textContent = e.rarity;
+      const mid = document.createElement('div'); mid.className = 'lmid';
+      const a = document.createElement('a'); a.textContent = e.title; a.href = e.url || ('https://ja.wikipedia.org/wiki/' + encodeURIComponent(e.title)); a.target = '_blank'; a.rel = 'noopener';
+      const dt = document.createElement('div'); dt.className = 'ldate'; dt.textContent = fmt(e.at); mid.append(a, dt);
+      const mk = (key, label) => { const l = document.createElement('label'); l.className = 'lchk';
+        const c = document.createElement('input'); c.type = 'checkbox'; c.checked = !!e[key];
+        c.addEventListener('change', () => { const lg = loadLog(), x = lg.find(y => y.title === e.title); if (x) { x[key] = c.checked; saveLog(lg); }
+          e[key] = c.checked; if (key === 'read') row.classList.toggle('read', c.checked); });
+        l.append(c, document.createTextNode(label)); return l; };
+      row.append(tag, mid, mk('read', '既読'), mk('fav', '★'));
+      frag.appendChild(row);
+    });
+    list.appendChild(frag);
+  }
+  $('logBtn').addEventListener('click', () => { renderLog(); $('log').style.display = 'flex'; });
+  $('logClose').addEventListener('click', () => $('log').style.display = 'none');
+  document.querySelectorAll('#logSort button').forEach(b => b.addEventListener('click', () => { logSort = b.dataset.s; renderLog(); }));
 
   // ---------- クレジット ----------
   $('creditBtn').addEventListener('click', () => $('credit').style.display = 'flex');
