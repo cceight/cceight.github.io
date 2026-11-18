@@ -167,6 +167,16 @@
   .mini .th { background-size: cover; background-position: center; }
   #list .lbtn { display: flex; gap: 12px; margin-top: 16px; } #list .lbtn .sharebtn { display: block; }
   #listClose { margin-top: 0; }
+  /* C：ツヤなしのクリーム色の紙 */
+  #card.c { background: linear-gradient(120deg, #efe5cf, #d9cbad, #efe5cf); animation: none; }
+  #card.c.show { animation: flip .6s cubic-bezier(.2,1.5,.4,1) forwards; }
+  #card.c .inner { background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .45 0 0 0 0 .38 0 0 0 0 .25 0 0 0 .09 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"), #f7f0de; }
+  #card.c .inner::after { display: none; animation: none !important; }
+  #card.c .title { border-bottom-color: #cdbf9f; }
+  #card.c .badge { background: #d9cbad; color: #5a4b2e; }
+  .mini.C { background: linear-gradient(120deg, #efe5cf, #d9cbad, #efe5cf); }
+  .mini.C .in { background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .45 0 0 0 0 .38 0 0 0 0 .25 0 0 0 .09 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"), #f7f0de; }
+  .mini.C .b { background: #bfae8a; }
 </style>
 </head>
 <body>
@@ -942,7 +952,7 @@
     ten = { items, seq: items.map(i => i.rarity), i: -1, steps: ['silver'].concat(maxNoUR >= 3 ? ['gold'] : []).concat(maxNoUR >= 4 ? ['blue'] : []) };
     OT.end = ten.steps.length * 600 + 250;
     skipBtn.style.display = 'block';
-    startRun('OPEN');
+    advanceTen();
   });
   function advanceTen() {
     ten.i++;
@@ -976,7 +986,7 @@
   $('card').addEventListener('click', () => { if (current && current.url && card.classList.contains('show')) window.open(current.url, '_blank', 'noopener'); });
 
   // ---------- ポスト ----------
-  const TAG = { UR: '【UR虹】', SSR: '【SSRダイヤ】', SR: '【SR金】', R: '【R銀】', UC: '【UC銅】', C: '【C白】' };
+  const TAG = { UR: '【UR🌈】', SSR: '【SSR💎】', SR: '【SR🥇】', R: '【R🥈】', UC: '【UC🥉】', C: '【C⚪】' };
   function xlen(s) { let n = 0; for (const ch of s) { const c = ch.codePointAt(0);
     n += (c <= 0x10FF || (c >= 0x2000 && c <= 0x200D) || (c >= 0x2010 && c <= 0x201F) || (c >= 0x2032 && c <= 0x2037)) ? 1 : 2; } return n; }
   const cut = (t, m) => [...t].length > m ? [...t].slice(0, m).join('') + '…' : t;
