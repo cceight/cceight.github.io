@@ -1,0 +1,1042 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Wikiガチャ</title>
+<meta name="description" content="Wikipediaの記事が出るガチャ。虹色のURは秀逸な記事。">
+<meta property="og:title" content="Wikiガチャ">
+<meta property="og:description" content="Wikipediaの記事が出るガチャ。虹色のURは秀逸な記事。">
+<meta property="og:image" content="https://cceight.github.io/wiki-gacha/img/s6.jpg">
+<meta property="og:url" content="https://cceight.github.io/wiki-gacha/">
+<meta name="twitter:card" content="summary_large_image">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; background: #07080f; overflow: hidden;
+    font-family: "Hiragino Sans", "Noto Sans JP", "Yu Gothic", sans-serif; color: #fff; }
+  #stage { position: fixed; inset: 0; overflow: hidden; }
+  .full { position: absolute; inset: 0; pointer-events: none; }
+  #dark { background: #000; opacity: 0; }
+
+  /* ---- UR背景 ---- */
+  #urbg { left: 50%; top: 50%; width: 260vmax; height: 260vmax; inset: auto; margin: -130vmax 0 0 -130vmax; position: absolute;
+    background: conic-gradient(from 0deg, #ff2d55, #ffcc00, #4cd964, #00e5ff, #5856d6, #ff2dd2, #ff2d55);
+    opacity: 0; pointer-events: none; }
+  #urshade { background: radial-gradient(circle, rgba(0,0,0,.15) 0%, rgba(0,0,0,.55) 60%, rgba(0,0,0,.7) 100%); opacity: 0; }
+  .rays { position: absolute; left: 50%; top: 50%; width: 240vmax; height: 240vmax; margin: -120vmax 0 0 -120vmax; opacity: 0; pointer-events: none;
+    background-size: 100% 100%; will-change: transform, opacity; }
+  #urtext { position: absolute; left: -50vmax; top: -50vmax; width: 300vmax; transform: rotate(-14deg); opacity: 0;
+    font-weight: 900; font-size: 22vmin; line-height: .95; letter-spacing: -.02em; white-space: nowrap; pointer-events: none;
+    color: transparent; -webkit-text-stroke: 2px rgba(255,255,255,.18); }
+  #urtext div:nth-child(odd) { animation: slideL 3s linear infinite; }
+  #urtext div:nth-child(even) { animation: slideR 3s linear infinite; color: rgba(255,255,255,.07); }
+  #edge { box-shadow: inset 0 0 8vmin 2vmin #ff2d55; opacity: 0; }
+
+  /* ---- フラッシュバック ---- */
+  .film { position: absolute; left: 0; top: 0; opacity: 0; overflow: hidden; will-change: transform, opacity;
+    box-shadow: 0 12px 40px rgba(0,0,0,.7); }
+  .film canvas { position: absolute; inset: 0; width: 100%; height: 100%; will-change: filter; }
+  .vig { background: radial-gradient(ellipse at center, transparent 45%, rgba(0,0,0,.7) 100%); }
+  .scan { opacity: .22; background: repeating-linear-gradient(0deg, rgba(0,0,0,.4) 0 1px, transparent 1px 3px); }
+  #sub { position: absolute; left: 0; right: 0; bottom: 8%; text-align: center; font-weight: 800;
+    font-size: clamp(12px, 3.6vw, 26px); letter-spacing: .02em; opacity: 0; pointer-events: none;
+    text-shadow: 0 0 3px #000, 0 0 3px #000, 0 0 6px #000, 0 2px 8px #000; }
+  #rbp { position: absolute; top: 0; bottom: 0; left: 50%; width: 170px; opacity: 0; pointer-events: none; will-change: transform, width;
+    background: linear-gradient(90deg, rgba(255,0,60,0), hsla(0,100%,62%,.85) 10%, hsla(35,100%,60%,.9) 22%, hsla(60,100%,60%,.9) 32%, hsla(130,100%,60%,.9) 42%,
+      #fff 50%, hsla(195,100%,62%,.9) 58%, hsla(230,100%,65%,.9) 68%, hsla(275,100%,66%,.9) 78%, hsla(315,100%,64%,.85) 90%, rgba(255,0,200,0));
+    filter: blur(3px); }
+  #slash { position: absolute; left: -60%; top: -50%; width: 30%; height: 200%; z-index: 1; pointer-events: none; opacity: 0;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,.95) 40%, #fff 50%, rgba(255,255,255,.95) 60%, transparent);
+    transform: rotate(18deg); }
+  #slash.go { animation: slash .16s ease-in forwards; }
+
+  #fx { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+  #flash { background: #fff; opacity: 0; }
+
+  /* ---- カード ---- */
+  #cardWrap { position: absolute; left: 50%; top: 50%; width: min(82vw, 380px);
+    transform: translate(-50%, -50%); perspective: 1200px; opacity: 0; pointer-events: none; }
+  #cardGlow { position: absolute; inset: -30px; border-radius: 40px; filter: blur(22px); opacity: .9;
+    background: conic-gradient(#ff2d55, #ffcc00, #4cd964, #00e5ff, #5856d6, #ff2dd2, #ff2d55); animation: spin 2s linear infinite; }
+  #card { position: relative; border-radius: 18px; padding: 5px;
+    background: linear-gradient(120deg, #ff4d6d, #ffb84d, #f4ff4d, #4dff88, #4dd8ff, #8a4dff, #ff4dd2, #ff4d6d);
+    background-size: 300% 300%; animation: rainbow 1.5s linear infinite; transform: rotateY(90deg); }
+  #card.show { animation: rainbow 1.5s linear infinite, flip .6s cubic-bezier(.2,1.5,.4,1) forwards; }
+  .inner { border-radius: 14px; background: #fbfbfd; color: #202122; padding: 22px 20px 20px; position: relative; overflow: hidden; }
+  .inner::after { content: ""; position: absolute; inset: 0; pointer-events: none;
+    background: linear-gradient(115deg, transparent 30%, rgba(255,255,255,.9) 45%, transparent 60%); transform: translateX(-120%); }
+  #card.show .inner::after { animation: shine 1.1s .6s ease-out infinite; }
+  .badge { display: inline-block; font-weight: 900; font-size: 15px; letter-spacing: .08em; padding: 4px 12px; border-radius: 999px; color: #fff;
+    background: linear-gradient(90deg, #ff4d6d, #ffb84d, #4dff88, #4dd8ff, #8a4dff, #ff4d6d); background-size: 200% 100%; animation: rainbow 1s linear infinite; }
+  .kind { font-size: 12px; color: #72777d; margin-left: 8px; }
+  .title { font-family: "Hiragino Mincho ProN", "Yu Mincho", "Noto Serif JP", serif;
+    font-size: 26px; line-height: 1.3; margin: 14px 0 6px; padding-bottom: 8px; border-bottom: 1px solid #a2a9b1; transform: scale(2.2); opacity: 0; }
+  #card.show .title { animation: don .35s .45s cubic-bezier(.3,1.6,.5,1) forwards; }
+  .lead { font-size: 14px; line-height: 1.75; color: #3a3d42; }
+  .thumb { float: right; width: 92px; height: 92px; margin: 2px 0 8px 12px; border-radius: 6px;
+    background: repeating-linear-gradient(45deg, #e6e8ec 0 8px, #f2f3f5 8px 16px);
+    display: flex; align-items: center; justify-content: center; font-size: 11px; color: #8a8f96; }
+
+  #ui { transition: opacity .3s; position: absolute; left: 0; right: 0; bottom: 5vh; display: flex; justify-content: center; z-index: 5; }
+  button { font: inherit; font-weight: 700; font-size: 16px; color: #1a1a2e; border: 0; cursor: pointer;
+    padding: 14px 28px; border-radius: 999px; background: linear-gradient(90deg, #ffe07a, #ffb84d); box-shadow: 0 4px 18px rgba(255,184,77,.4); }
+  button:disabled { opacity: .35; cursor: default; }
+  #hint { position: absolute; top: 4vh; width: 100%; text-align: center; font-size: 13px; color: rgba(255,255,255,.55); transition: opacity .3s; }
+
+  @keyframes rainbow { 0% { background-position: 0% 50%; } 100% { background-position: 300% 50%; } }
+  @keyframes flip { from { transform: rotateY(90deg) scale(.6); } to { transform: rotateY(0) scale(1); } }
+  @keyframes don { to { transform: scale(1); opacity: 1; } }
+  @keyframes shine { to { transform: translateX(120%); } }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @keyframes slash { 0% { left: -60%; opacity: 1; } 100% { left: 130%; opacity: 1; } }
+  @keyframes slideL { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+  @keyframes slideR { from { transform: translateX(-50%); } to { transform: translateX(0); } }
+  #ssrbg { background: radial-gradient(circle at 50% 50%, #1b5b9a 0%, #0a1f3d 45%, #02060f 100%); opacity: 0; }
+  #stex { overflow: hidden; opacity: 0; }
+  #stexi { position: absolute; left: 50%; top: 50%; background: url(img/diamond.jpg) center / cover no-repeat; will-change: transform; }
+  #sband { opacity: 0; left: -50%; width: 200%; will-change: transform;
+    background: linear-gradient(115deg, transparent 38%, rgba(255,120,200,.18) 45%, rgba(255,255,255,.55) 50%, rgba(120,220,255,.25) 55%, transparent 62%); }
+  #spulse { background: rgb(150,220,255); opacity: 0; mix-blend-mode: screen; }
+  #card.ssr { background: linear-gradient(120deg, #e8fbff, #7fe3ff, #2fa8ff, #bff4ff, #5fd0ff, #e8fbff); background-size: 300% 300%; }
+  #cardWrap.ssr #cardGlow { background: conic-gradient(#7fe3ff, #ffffff, #2fa8ff, #bff4ff, #7fe3ff); opacity: .75; }
+  #card.ssr .badge { background: linear-gradient(90deg, #2fa8ff, #7fe3ff, #e8fbff, #2fa8ff); background-size: 200% 100%; color: #08304f; }
+  #ui { gap: 12px; }
+  #card.sr { background: linear-gradient(120deg, #fff4c2, #ffd34d, #c8901e, #ffe58a, #f5b92e, #fff4c2); background-size: 300% 300%; }
+  #cardWrap.sr #cardGlow { background: conic-gradient(#ffd34d, #fff4c2, #c8901e, #ffe58a, #ffd34d); opacity: .6; }
+  #card.sr .badge { background: linear-gradient(90deg, #c8901e, #ffd34d, #fff4c2, #c8901e); background-size: 200% 100%; color: #4a2f00; }
+  #play { background: linear-gradient(90deg, #ff8fa3, #ffd36b, #8fffb0, #8fe6ff, #c39bff); }
+  #ui { flex-wrap: wrap; gap: 8px; padding: 0 10px; }
+  #ui button { min-width: 0; flex: 0 0 auto; padding: 12px 14px; font-size: 14px; }
+  #card.r { background: linear-gradient(120deg, #ffffff, #c9d1da, #8d98a5, #e9eef3, #aab4bf, #ffffff); background-size: 300% 300%; }
+  #cardWrap.r #cardGlow { background: conic-gradient(#e9eef3, #aab4bf, #ffffff, #8d98a5, #e9eef3); opacity: .35; }
+  #card.r .badge { background: linear-gradient(90deg, #8d98a5, #e9eef3, #ffffff, #8d98a5); background-size: 200% 100%; color: #2c3440; }
+  #card.uc { background: linear-gradient(120deg, #f3c9a0, #c87533, #8a4b1c, #e3a46a, #b5652a, #f3c9a0); background-size: 300% 300%; }
+  #card.uc .badge { background: linear-gradient(90deg, #8a4b1c, #e3a46a, #8a4b1c); background-size: 200% 100%; color: #fff; }
+  #card.c { background: linear-gradient(120deg, #ffffff, #e6e8ec, #cfd3d9, #ffffff); background-size: 300% 300%; }
+  #card.c .badge { background: #e6e8ec; color: #54595d; }
+  #cardWrap.uc #cardGlow, #cardWrap.c #cardGlow { opacity: 0; }
+  button.cu { background: linear-gradient(90deg, #f3c9a0, #c87533); }
+  button.cw { background: #f2f3f5; }
+  button.sv { background: linear-gradient(90deg, #ffffff, #b8c2cc); }
+  button.g { background: linear-gradient(90deg, #fff1b8, #f2b632); }
+  button.s { background: linear-gradient(90deg, #d6f8ff, #5fd0ff); box-shadow: 0 4px 18px rgba(95,208,255,.4); }
+  #skip { position: absolute; top: 3vh; right: 4vw; z-index: 6; display: none; padding: 8px 16px; font-size: 13px;
+    background: rgba(255,255,255,.88); color: #1a1a2e; box-shadow: 0 2px 10px rgba(0,0,0,.4); }
+  button.ten { background: linear-gradient(90deg, #ffffff, #ffe07a, #8fe6ff, #ff9ad5); }
+  #list { position: absolute; inset: 0; z-index: 7; display: none; flex-direction: column; align-items: center;
+    padding: 5vh 4vw 4vh; overflow: auto; background: rgba(5,6,12,.94); }
+  #list h2 { font-size: 18px; letter-spacing: .1em; margin-bottom: 14px; }
+  #grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: min(92vw, 520px); }
+  .mini { border-radius: 10px; padding: 3px; opacity: 0; transform: translateY(10px) scale(.95); transition: opacity .25s, transform .25s; }
+  .mini.on { opacity: 1; transform: none; }
+  .mini .in { background: #fbfbfd; color: #202122; border-radius: 8px; padding: 8px; display: flex; gap: 8px; align-items: center; min-height: 66px; }
+  .mini .th { width: 44px; height: 44px; border-radius: 4px; flex: none; background: repeating-linear-gradient(45deg, #e6e8ec 0 6px, #f2f3f5 6px 12px); }
+  .mini .b { display: inline-block; font-size: 10px; font-weight: 900; padding: 1px 7px; border-radius: 999px; color: #fff; margin-bottom: 3px; }
+  .mini .tt { font-size: 12px; line-height: 1.35; }
+  .mini.UR { background: linear-gradient(120deg, #ff4d6d, #ffb84d, #f4ff4d, #4dff88, #4dd8ff, #8a4dff, #ff4dd2, #ff4d6d); background-size: 300% 300%; animation: rainbow 1.5s linear infinite; box-shadow: 0 0 16px rgba(255,255,255,.5); }
+  .mini.UR .b { background: linear-gradient(90deg, #ff4d6d, #ffb84d, #4dff88, #4dd8ff, #8a4dff); }
+  .mini.SSR { background: linear-gradient(120deg, #e8fbff, #7fe3ff, #2fa8ff, #bff4ff); box-shadow: 0 0 12px rgba(95,208,255,.5); } .mini.SSR .b { background: #2fa8ff; }
+  .mini.SR { background: linear-gradient(120deg, #fff4c2, #ffd34d, #c8901e, #ffe58a); } .mini.SR .b { background: #c8901e; }
+  .mini.R { background: linear-gradient(120deg, #ffffff, #c9d1da, #8d98a5, #e9eef3); } .mini.R .b { background: #8d98a5; }
+  .mini.UC { background: linear-gradient(120deg, #f3c9a0, #c87533, #8a4b1c); } .mini.UC .b { background: #a85f28; }
+  .mini.C { background: linear-gradient(120deg, #ffffff, #e6e8ec, #cfd3d9); } .mini.C .b { background: #9aa0a6; }
+  #listClose { margin-top: 16px; }
+  #hint { top: 9vh; }
+  #hint .logo { font-size: clamp(34px, 10vw, 54px); font-weight: 900; letter-spacing: .04em; color: #fff;
+    background: linear-gradient(90deg, #ff8fa3, #ffd36b, #8fffb0, #8fe6ff, #c39bff); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+  #hint .sub { margin-top: 6px; font-size: 13px; color: rgba(255,255,255,.6); }
+  #ui { flex-direction: column; align-items: center; gap: 12px; bottom: 9vh; }
+  #ui button { min-width: 240px; padding: 16px 24px; font-size: 18px; }
+  #ui button small { display: block; font-size: 12px; margin-top: 2px; color: #7a1f6b; }
+  .sharebtn { display: none; background: #111 !important; color: #fff !important; box-shadow: 0 0 0 1px rgba(255,255,255,.4) !important; }
+  #ui .sharebtn { min-width: 0; padding: 10px 20px; font-size: 14px; }
+  #foot { position: absolute; left: 0; right: 0; bottom: 2vh; display: flex; justify-content: center; gap: 12px; align-items: center; font-size: 11px; color: rgba(255,255,255,.45); z-index: 5; }
+  #foot button { background: none; box-shadow: none; color: rgba(255,255,255,.6); font-size: 11px; padding: 4px 8px; text-decoration: underline; }
+  #loading { position: absolute; inset: 0; z-index: 8; display: none; align-items: center; justify-content: center; background: rgba(0,0,0,.6); font-size: 15px; letter-spacing: .1em; }
+  #credit { position: absolute; inset: 0; z-index: 9; display: none; align-items: center; justify-content: center; background: rgba(0,0,0,.75); padding: 20px; }
+  #credit .box { background: #fbfbfd; color: #202122; border-radius: 14px; padding: 20px; max-width: 420px; font-size: 13px; line-height: 1.7; }
+  #credit h3 { margin-bottom: 8px; } #credit p { margin-bottom: 6px; } #credit .small { font-size: 11px; color: #72777d; }
+  #credit button { margin-top: 10px; }
+  #cardWrap { pointer-events: none; top: 40%; }
+  .lead { display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
+  @media (min-aspect-ratio: 1/1) { #cardWrap { top: 42%; } }
+  #card.show { pointer-events: auto; cursor: pointer; }
+  img.thumb { object-fit: cover; display: none; }
+  .src { clear: both; margin-top: 10px; font-size: 9.5px; line-height: 1.4; color: #8a8f96; }
+  .mini { display: block; text-decoration: none; }
+  .mini .th { background-size: cover; background-position: center; }
+  #list .lbtn { display: flex; gap: 12px; margin-top: 16px; } #list .lbtn .sharebtn { display: block; }
+  #listClose { margin-top: 0; }
+</style>
+</head>
+<body>
+<div id="stage">
+  <div id="urbg"></div>
+  <div id="urshade" class="full"></div>
+  <div id="rays2" class="rays"></div>
+  <div id="rays1" class="rays"></div>
+  <div id="urtext"></div>
+  <div id="ssrbg" class="full"></div>
+  <div id="srays2" class="rays"></div>
+  <div id="srays" class="rays"></div>
+  <div id="dark" class="full"></div>
+  <div id="rbp"></div>
+  <div class="film" id="filmA"><canvas></canvas><div class="full vig"></div><div class="full scan"></div></div>
+  <div class="film" id="filmB"><canvas></canvas><div class="full vig"></div><div class="full scan"></div></div>
+  <div id="slash"></div>
+  <div id="stex" class="full"><div id="stexi"></div></div>
+  <div id="sband" class="full"></div>
+  <div id="spulse" class="full"></div>
+  <canvas id="fx"></canvas>
+  <div id="edge" class="full"></div>
+  <div id="cardWrap">
+    <div id="cardGlow"></div>
+    <div id="card">
+      <div class="inner">
+        <span class="badge">UR</span><span class="kind">秀逸な記事</span>
+        <div class="title">地方病 (日本住血吸虫症)</div>
+        <img id="thumb" class="thumb" alt="">
+        <p class="lead"></p><div id="src" class="src"></div>
+      </div>
+    </div>
+  </div>
+  <div id="flash" class="full"></div>
+</div>
+<div id="hint"><div class="logo">Wikiガチャ</div><div class="sub">Wikipediaの記事が出るガチャ</div></div>
+<div id="ui"><button id="share" class="sharebtn">結果をポストする</button><button id="one" disabled>読み込み中…</button><button id="tenBtn" class="ten" disabled>読み込み中…</button></div>
+<div id="foot"><button id="creditBtn">クレジット</button><span>※点滅する演出があります</span></div>
+<div id="loading"></div>
+<div id="credit"><div class="box">
+  <h3>クレジット</h3>
+  <p>記事の文章：Wikipedia日本語版の各記事（CC BY-SA 4.0）。各記事の出典はカードと記事リンクに表示しています。</p>
+  <p>記事の画像：Wikimedia Commons 等の各画像（作者・ライセンスはカードに表示）。</p>
+  <p>BGM：PeriTune「Moonlit Overture」</p>
+  <p>効果音：（出典を記入）</p>
+  <p>演出用イラスト：画像生成AIで作成</p>
+  <p class="small">本ゲームはウィキメディア財団およびWikipediaとは関係のない非公式のファン作品です。</p>
+  <button id="creditClose">閉じる</button>
+</div></div>
+<button id="skip">スキップ ≫</button>
+<div id="list"><h2>10連 結果</h2><div id="grid"></div><div class="lbtn"><button id="listShare" class="sharebtn">結果をポストする</button><button id="listClose">閉じる</button></div></div>
+
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const stage = $('stage'), dark = $('dark'), flash = $('flash'), rbp = $('rbp'), sub = { style: {} }, slash = $('slash'),
+        urbg = $('urbg'), urshade = $('urshade'), rays1 = $('rays1'), rays2 = $('rays2'), urtext = $('urtext'), edge = $('edge'),
+        cardWrap = $('cardWrap'), card = $('card'), btn = { dataset: {}, style: {} }, hint = $('hint'), ui = $('ui'),
+        ssrbg = $('ssrbg'), srays = $('srays'), srays2 = $('srays2'), stex = $('stex'), stexi = $('stexi'), sband = $('sband'), spulse = $('spulse'),
+        badge = document.querySelector('.badge'), kindEl = document.querySelector('.kind'), titleEl = document.querySelector('.title');
+  const cv = $('fx'), ctx = cv.getContext('2d');
+  const PANELS = ['filmA', 'filmB'].map(id => { const el = $(id), cv = el.querySelector('canvas'); return { el, cv, cx: cv.getContext('2d') }; });
+  let FC = PANELS[0].cv, fctx = PANELS[0].cx;
+  const film = { style: {} }; // 旧コード互換
+  let PW = 0, PH = 0;
+  const R = Math.random, clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+
+  // 光線を一度だけ画像に焼き込む（ぼかしマスク込み）
+  function bakeRays(el, period, width, colorFn) {
+    const N = 1024, c = document.createElement('canvas'); c.width = c.height = N; const g = c.getContext('2d'), h = N / 2;
+    const n = Math.round(360 / period);
+    for (let i = 0; i < n; i++) { const a0 = (i * period - 90) * Math.PI / 180, a1 = a0 + width * Math.PI / 180;
+      g.fillStyle = colorFn(i); g.beginPath(); g.moveTo(h, h); g.arc(h, h, N, a0, a1); g.closePath(); g.fill(); }
+    g.globalCompositeOperation = 'destination-in';
+    const gr = g.createRadialGradient(h, h, 0, h, h, N * .37); gr.addColorStop(0, '#000'); gr.addColorStop(.42, 'rgba(0,0,0,.7)'); gr.addColorStop(1, 'rgba(0,0,0,0)');
+    g.fillStyle = gr; g.fillRect(0, 0, N, N);
+    el.style.backgroundImage = `url(${c.toDataURL()})`;
+  }
+  const RH = [0, 60, 130, 195, 265, 315];
+  bakeRays($('rays1'), 12, 4, () => 'rgba(255,255,255,.3)');
+  bakeRays($('rays2'), 15, 5, i => `hsla(${RH[i % 6]},100%,65%,.6)`);
+  bakeRays($('srays'), 14, 3, () => 'rgba(170,240,255,.55)');
+  bakeRays($('srays2'), 9, 1.5, () => 'rgba(255,255,255,.3)');
+
+  // 背景の巨大UR文字
+  for (let i = 0; i < 8; i++) { const d = document.createElement('div'); d.textContent = 'UR UR UR UR UR UR UR UR UR UR UR UR'; urtext.appendChild(d); }
+
+  let W = 0, H = 0;
+  function resize() {
+    const dpr = Math.min(window.devicePixelRatio || 1, innerWidth < 768 ? 1.5 : 2);
+    W = innerWidth; H = innerHeight;
+    cv.width = W * dpr; cv.height = H * dpr; ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const fd = Math.min(window.devicePixelRatio || 1, 1.5);
+    PW = W > H ? W * .46 : W * .84; PH = PW * 9 / 16;
+    PANELS.forEach(P => { P.el.style.width = PW + 'px'; P.el.style.height = PH + 'px'; P.cv.width = Math.round(PW * fd); P.cv.height = Math.round(PH * fd); });
+  }
+  addEventListener('resize', resize); resize();
+
+  // 画像読み込み → 赤チャンネル／シアンチャンネルに分解（色ズレ用）
+  const CH = [];
+  function split(img) {
+    const mk = col => { const c = document.createElement('canvas'); c.width = img.naturalWidth; c.height = img.naturalHeight;
+      const x = c.getContext('2d'); x.drawImage(img, 0, 0); x.globalCompositeOperation = 'multiply'; x.fillStyle = col; x.fillRect(0, 0, c.width, c.height); return c; };
+    return { r: mk('#ff0000'), gb: mk('#00ffff') };
+  }
+  let loaded = 0;
+  ['s1','s2','s3','s4','s5','s6'].forEach((n, i) => { const im = new Image();
+    im.onload = () => { CH[i] = split(im); if (++loaded === 6) { setBtns(false); $('one').textContent = '1記事読む'; $('tenBtn').innerHTML = '10回記事を読む<small>SR1個以上確定！</small>'; } };
+    im.src = `img/${n}.jpg`; });
+
+  // シーン: 開始, 長さ, 揺れpx, 傾きdeg, グリッチ量
+  const CUTS = [[0, 1], [2, 3], [4, 5]].map((pair, c) => ({ pair, s: 250 + c * 1000, d: 1000, g: .15, shake: 3 }));
+  const T = { burst: 3250, card: 3900, end: 5900 };
+  let start = 0, running = false, parts = [], burstDone = false, rot = 0, prev = 0, cur = -1, nextFw = 0, nextRing = 0;
+
+  function drawFilm(i, zoom, shift) {
+    const w = FC.width, h = FC.height, c = CH[i];
+    fctx.globalCompositeOperation = 'source-over'; fctx.fillStyle = '#000'; fctx.fillRect(0, 0, w, h);
+    const dw = w * zoom, dh = h * zoom, x = (w - dw) / 2, y = (h - dh) / 2;
+    fctx.globalCompositeOperation = 'lighter';
+    fctx.drawImage(c.r, x + shift * w, y - shift * h * .3, dw, dh);
+    fctx.drawImage(c.gb, x - shift * w, y + shift * h * .3, dw, dh);
+    fctx.globalCompositeOperation = 'source-over';
+  }
+  function slices(n) {
+    const w = FC.width, h = FC.height;
+    for (let k = 0; k < n; k++) { const y = R() * h, sh = h * (.015 + R() * .09), off = (R() - .5) * w * .22;
+      fctx.drawImage(FC, 0, y, w, sh, off, y, w, sh); }
+  }
+  function speedLines(a) {
+    if (a <= 0) return;
+    const w = FC.width, h = FC.height, cx = w / 2, cy = h / 2, M = Math.hypot(w, h) / 2;
+    fctx.fillStyle = `rgba(255,255,255,${a})`;
+    for (let k = 0; k < 60; k++) { const an = R() * Math.PI * 2, r0 = M * (.42 + R() * .3), wd = .004 + R() * .012;
+      fctx.beginPath(); fctx.moveTo(cx + Math.cos(an) * r0, cy + Math.sin(an) * r0);
+      fctx.lineTo(cx + Math.cos(an - wd) * M * 1.2, cy + Math.sin(an - wd) * M * 1.2);
+      fctx.lineTo(cx + Math.cos(an + wd) * M * 1.2, cy + Math.sin(an + wd) * M * 1.2); fctx.fill(); }
+  }
+  function triggerSlash() { slash.classList.remove('go'); void slash.offsetWidth; slash.style.transform = `rotate(${(R() - .5) * 60}deg)`; slash.classList.add('go'); }
+
+  // ---- パーティクル ----
+  function boom(x, y, n, spMax, sizeMax, h0 = 0, h1 = 360, l0 = 60, l1 = 85) {
+    for (let i = 0; i < n; i++) { const a = R() * Math.PI * 2, sp = 2 + R() * spMax;
+      parts.push({ t: 'b', x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, life: 1, decay: .008 + R() * .014,
+        size: 1.5 + R() * sizeMax, col: `hsl(${h0 + R() * (h1 - h0) | 0},100%,${l0 + R() * (l1 - l0) | 0}%)` }); }
+  }
+  function ring(x, y, speed, hue) { parts.push({ t: 'r', x, y, r: 0, life: 1, sp: speed, hue }); }
+  function confetti() {
+    parts.push({ t: 'c', x: R() * W, y: -20, vx: (R() - .5) * 2, vy: 2 + R() * 3, a: R() * 6, va: (R() - .5) * .4,
+      w: 6 + R() * 8, h: 3 + R() * 5, life: 1, col: `hsl(${R() * 360 | 0},100%,60%)`, ph: R() * 6 });
+  }
+  function star(col) { parts.push({ t: 's', x: R() * W, y: R() * H, life: 1, decay: .02 + R() * .03, size: 8 + R() * 22, col: col || `hsl(${(R() * 12 | 0) * 30},100%,85%)` }); }
+  const starCache = {};
+  function starSprite(col) {
+    if (starCache[col]) return starCache[col];
+    const N = 64, c = document.createElement('canvas'); c.width = c.height = N; const g = c.getContext('2d'), m = N / 2, s = N / 2;
+    g.fillStyle = col; g.beginPath();
+    g.moveTo(m, m - s); g.quadraticCurveTo(m, m, m + s * .35, m); g.quadraticCurveTo(m, m, m, m + s);
+    g.quadraticCurveTo(m, m, m - s * .35, m); g.quadraticCurveTo(m, m, m, m - s);
+    g.moveTo(m - s, m); g.quadraticCurveTo(m, m, m, m + s * .35); g.quadraticCurveTo(m, m, m + s, m);
+    g.quadraticCurveTo(m, m, m, m - s * .35); g.quadraticCurveTo(m, m, m - s, m); g.fill();
+    return starCache[col] = c;
+  }
+  function drawStar(p) {
+    const s = p.size * Math.sin(p.life * Math.PI); if (s < .5) return;
+    ctx.drawImage(starSprite(p.col), p.x - s, p.y - s, s * 2, s * 2);
+  }
+  function flares(t) {
+    const a = t / 900, lx = W / 2 + Math.cos(a) * W * .45, ly = H / 2 + Math.sin(a * 1.3) * H * .35;
+    const pts = [[lx, ly, 120, .5], [W / 2 + (W / 2 - lx) * .3, H / 2 + (H / 2 - ly) * .3, 40, .35], [W - lx, H - ly, 70, .3], [W / 2 + (W / 2 - lx) * .7, H / 2 + (H / 2 - ly) * .7, 25, .4]];
+    pts.forEach(([x, y, r, al], i) => { const g = ctx.createRadialGradient(x, y, 0, x, y, r);
+      g.addColorStop(0, `hsla(${(t / 8 + i * 70) % 360},100%,80%,${al})`); g.addColorStop(1, 'transparent');
+      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill(); });
+  }
+
+  // ===== 効果音 =====
+  let AC = null; const BUF = {}, RAW = {};
+  const SND = { c: 'snd/c.mp3', r: 'snd/r.mp3', sr: 'snd/sr.mp3', ssr1: 'snd/ssr1.mp3', ssr2: 'snd/ssr2.mp3', bgm: 'snd/bgm.mp3' };
+  try { AC = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { AC = null; }
+  Object.entries(SND).forEach(([k, url]) => {
+    fetch(url).then(r => r.arrayBuffer()).then(ab => AC ? AC.decodeAudioData(ab) : null)
+      .then(b => { if (b) BUF[k] = b; }).catch(() => {});
+  });
+  function unlockAudio() { try { if (AC && AC.state !== 'running') AC.resume(); } catch (e) {} }
+  function sfx(k, gain = 1) {
+    if (!AC || !BUF[k]) return; if (AC.state !== 'running') unlockAudio();
+    try { const src = AC.createBufferSource(), g = AC.createGain(); src.buffer = BUF[k]; g.gain.value = gain;
+      src.connect(g).connect(AC.destination); src.start(); } catch (e) {}
+  }
+  // BGM：記事タイトルが出る瞬間（UR開始から約9.7秒）に曲の25.0秒が来るよう逆算
+  const BGM_HOOK = 25.0, UR_TITLE_AT = 9.7;
+  let bgm = null;
+  function playBgm(offset, riseIn = 0) {
+    if (bgm || !AC || !BUF.bgm) return; if (AC.state !== 'running') unlockAudio();
+    try { const src = AC.createBufferSource(), g = AC.createGain(); src.buffer = BUF.bgm;
+      src.loop = true; src.loopStart = BGM_HOOK; src.loopEnd = BUF.bgm.duration;
+      const now = AC.currentTime; g.gain.setValueAtTime(0, now); g.gain.setValueAtTime(0, now + riseIn); g.gain.linearRampToValueAtTime(1, now + riseIn + 0.3);
+      src.connect(g).connect(AC.destination); src.start(0, Math.max(0, offset)); bgm = { src, g }; } catch (e) { bgm = null; }
+  }
+  function stopBgm() {
+    if (!bgm) return; const { src, g } = bgm; bgm = null;
+    try { g.gain.cancelScheduledValues(AC.currentTime); g.gain.setValueAtTime(g.gain.value, AC.currentTime);
+      g.gain.linearRampToValueAtTime(0, AC.currentTime + 0.3); src.stop(AC.currentTime + 0.35); } catch (e) {}
+  }
+  let onceSet = {};
+  const once = (key, cond, fn) => { if (cond && !onceSet[key]) { onceSet[key] = true; fn(); } };
+
+  // ===== 共通：光の柱 =====
+  const PAL = {
+    silver: ['rgba(185,195,210,', 'rgba(225,232,242,'],
+    gold:   ['rgba(255,195,55,',  'rgba(255,225,120,'],
+    blue:   ['rgba(40,150,255,',  'rgba(130,215,255,'],
+  };
+  // y0〜y1 の柱。tip: 'bottom' / 'top' で丸い先端
+  function pillar(cx, y0, y1, w, pal, a = 1, tip = 'bottom') {
+    if (y1 <= y0 || w <= 0 || a <= 0) return;
+    const half = w / 2, g = ctx.createLinearGradient(cx - half, 0, cx + half, 0);
+    if (pal === 'rainbow') {
+      const hs = [0, 40, 60, 130, 195, 230, 280, 320];
+      hs.forEach((h, i) => g.addColorStop(i / (hs.length - 1), `hsla(${h},100%,62%,${a * (i === 0 || i === hs.length - 1 ? .25 : .9)})`));
+      g.addColorStop(.5, `rgba(255,255,255,${a})`);
+    } else {
+      const [e, m] = PAL[pal];
+      g.addColorStop(0, e + '0)'); g.addColorStop(.25, e + (.55 * a) + ')'); g.addColorStop(.42, m + (.9 * a) + ')');
+      g.addColorStop(.5, `rgba(255,253,240,${a})`); g.addColorStop(.58, m + (.9 * a) + ')'); g.addColorStop(.75, e + (.55 * a) + ')'); g.addColorStop(1, e + '0)');
+    }
+    ctx.fillStyle = g; ctx.beginPath();
+    if (tip === 'none') { ctx.rect(cx - half, y0, w, y1 - y0); }
+    else if (tip === 'bottom') { const yb = Math.max(y0, y1 - half); ctx.moveTo(cx - half, y0); ctx.lineTo(cx - half, yb); ctx.arc(cx, yb, half, Math.PI, 0, true); ctx.lineTo(cx + half, y0); }
+    else { const yt = Math.min(y1, y0 + half); ctx.moveTo(cx - half, y1); ctx.lineTo(cx - half, yt); ctx.arc(cx, yt, half, Math.PI, 0); ctx.lineTo(cx + half, y1); }
+    ctx.closePath(); ctx.fill();
+  }
+  function glowAt(x, y, r, rgb, a) {
+    const g = ctx.createRadialGradient(x, y, 0, x, y, r); g.addColorStop(0, `rgba(255,255,250,${a})`); g.addColorStop(.35, `rgba(${rgb},${a * .7})`); g.addColorStop(1, `rgba(${rgb},0)`);
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
+  }
+
+  // ===== SSR =====
+  let mode = 'UR', dia = null, shattered = false;
+  const S = { land: 300, white: 750, crack: 1550, shatter: 1550, card: 2200, end: 3800 };
+  const TEX0 = new Image(); let TEXR = null;
+  TEX0.onload = () => { const c = document.createElement('canvas'); c.width = TEX0.naturalHeight; c.height = TEX0.naturalWidth;
+    const x = c.getContext('2d'); x.translate(c.width, 0); x.rotate(Math.PI / 2); x.drawImage(TEX0, 0, 0); TEXR = c; };
+  TEX0.src = 'img/diamond.jpg';
+  const tex = () => (H > W && TEXR) ? TEXR : TEX0;
+  const tw = im => im.naturalWidth || im.width, th = im => im.naturalHeight || im.height;
+  function texRect(t) {
+    const z = 1.04 + .12 * clamp((t - S.white) / (S.shatter - S.white)), im = tex(), iw = tw(im), ih = th(im);
+    const sc = Math.max(W / iw, H / ih) * z; return { x: (W - iw * sc) / 2, y: (H - ih * sc) / 2, w: iw * sc, h: ih * sc };
+  }
+  function buildDia() {
+    // 衝撃点を中心に、同心円×放射線で画面を分割
+    const ix = W * (.42 + R() * .16), iy = H * (.42 + R() * .16), D = Math.hypot(W, H);
+    const NR = 10, radii = Array.from({ length: NR }, (_, k) => 1.12 * Math.pow(k / (NR - 1), 1.35) * D), NA = 13;
+    const base = []; for (let j = 0; j < NA; j++) base.push(j / NA * Math.PI * 2 + (R() - .5) * .35);
+    const V = radii.map((r, k) => base.map(a => { if (!k) return [ix, iy]; const rr = r * (1 + (R() - .5) * .18), aa = a + (R() - .5) * .12;
+      return [ix + Math.cos(aa) * rr, iy + Math.sin(aa) * rr]; }));
+    const cells = [];
+    for (let k = 0; k < radii.length - 1; k++) for (let j = 0; j < NA; j++) {
+      const j2 = (j + 1) % NA;
+      const poly = k === 0 ? [V[0][0], V[1][j], V[1][j2]] : [V[k][j], V[k + 1][j], V[k + 1][j2], V[k][j2]];
+      cells.push({ poly, k });
+    }
+    return { ix, iy, V, radii, NA, cells, D };
+  }
+  function ssrDraw(t) {
+    if (!dia || shattered) return;
+    const cx = W / 2, cy = H / 2;
+    if (t < S.white) {
+      ctx.globalCompositeOperation = 'lighter';
+      const bw = 92;
+      if (t < S.land) { const p = t / S.land, head = -H * .2 + (cy + H * .2) * p * p;
+        if (head > 0) { pillar(cx, 0, head, bw, 'blue'); glowAt(cx, head, bw * 1.3, '120,210,255', 1); } }
+      else { const e = clamp((t - S.land) / (S.white - S.land)), w = bw + Math.pow(e, 1.8) * Math.max(W, H) * 2.2;
+        pillar(cx, 0, H, w, 'blue', 1, 'none'); glowAt(cx, cy, 200 + e * Math.hypot(W, H), '120,210,255', 1); }
+      ctx.globalCompositeOperation = 'source-over'; return;
+    }
+    // 亀裂
+    if (t >= S.crack) {
+      const cp = clamp((t - S.crack) / (S.shatter - S.crack)), reach = cp * dia.D * 1.05;
+      ctx.save(); ctx.strokeStyle = '#fff'; ctx.shadowColor = '#fff'; ctx.shadowBlur = 10; ctx.lineCap = 'round';
+      const { V, radii, NA } = dia;
+      for (let j = 0; j < NA; j++) { ctx.lineWidth = 2.5; ctx.beginPath(); ctx.moveTo(V[0][0][0], V[0][0][1]);
+        for (let k = 1; k < radii.length; k++) { if (radii[k] > reach) {
+            const prev = V[k - 1][j], nx = V[k][j], f = clamp((reach - radii[k - 1]) / (radii[k] - radii[k - 1]));
+            ctx.lineTo(prev[0] + (nx[0] - prev[0]) * f, prev[1] + (nx[1] - prev[1]) * f); break; }
+          ctx.lineTo(V[k][j][0], V[k][j][1]); }
+        ctx.stroke(); }
+      ctx.lineWidth = 1.5;
+      for (let k = 1; k < radii.length; k++) { if (radii[k] > reach * .9) break; ctx.beginPath();
+        for (let j = 0; j <= NA; j++) { const v = V[k][j % NA]; j ? ctx.lineTo(v[0], v[1]) : ctx.moveTo(v[0], v[1]); } ctx.stroke(); }
+      ctx.restore();
+      ctx.globalCompositeOperation = 'lighter';
+      const ig = ctx.createRadialGradient(dia.ix, dia.iy, 0, dia.ix, dia.iy, 120 + cp * 120);
+      ig.addColorStop(0, `rgba(255,255,255,${.5 + cp * .5})`); ig.addColorStop(1, 'transparent');
+      ctx.fillStyle = ig; ctx.fillRect(0, 0, W, H); ctx.globalCompositeOperation = 'source-over';
+    }
+  }
+  function ssrLogic(t) {
+    once('ssr1', true, () => sfx('ssr1'));
+    once('ssr2', t >= S.shatter, () => sfx('ssr2'));
+    if (!dia) dia = buildDia();
+    dark.style.opacity = t < S.white ? clamp(t / 150) : 0;
+    if (t >= S.land && !dia.landed) { dia.landed = true; boom(W / 2, H / 2, 160, 13, 3, 190, 215, 65, 90); ring(W / 2, H / 2, 1.6, 200); }
+    { const u = t - S.land; if (u >= 0 && u < 220) { const a = 10 * (1 - u / 220); stage.style.transform = `translate(${(R() - .5) * a}px,${(R() - .5) * a}px)`; } }
+    // 明転
+    if (t >= S.white - 220 && t < S.white) { flash.style.transition = 'none'; flash.style.opacity = clamp((t - (S.white - 220)) / 220); }
+    if (t >= S.white && !dia.lit) { dia.lit = true; parts = parts.filter(p => p.t !== 'k'); ssrbg.style.opacity = 1;
+      flash.style.transition = 'opacity .45s ease-out'; flash.style.opacity = 0; }
+    if (t >= S.white && t < S.shatter) {
+      const port = H > W; stexi.style.width = (port ? H : W) + 'px'; stexi.style.height = (port ? W : H) + 'px';
+      const z = 1.04 + .12 * clamp((t - S.white) / (S.shatter - S.white));
+      stexi.style.transform = `translate(-50%,-50%) rotate(${port ? 90 : 0}deg) scale(${z})`;
+      stex.style.opacity = 1; sband.style.opacity = 1; spulse.style.opacity = .12 + .1 * Math.sin(t / 90);
+      const band = ((t - S.white) / 700) % 1.6 - .8; sband.style.transform = `translateX(${band * 100}%)`;
+      if (R() < .5) star(R() < .5 ? '#ffffff' : '#bff4ff');
+    }
+    if (t >= S.crack && t < S.shatter) { const a = 3 + (t - S.crack) / (S.shatter - S.crack) * 12; stage.style.transform = `translate(${(R() - .5) * a}px,${(R() - .5) * a}px)`; }
+    // 粉砕
+    if (t >= S.shatter && !shattered) {
+      shattered = true; stex.style.opacity = 0; sband.style.opacity = 0; spulse.style.opacity = 0; const r = texRect(S.shatter), im = tex();
+      dia.cells.forEach(c => {
+        const xs = c.poly.map(v => v[0]), ys = c.poly.map(v => v[1]);
+        const x0 = Math.floor(Math.min(...xs)) - 2, y0 = Math.floor(Math.min(...ys)) - 2, x1 = Math.ceil(Math.max(...xs)) + 2, y1 = Math.ceil(Math.max(...ys)) + 2;
+        const cw = Math.max(2, x1 - x0), chh = Math.max(2, y1 - y0);
+        if (x1 < -50 || y1 < -50 || x0 > W + 50 || y0 > H + 50) return;
+        const cvs = document.createElement('canvas'); cvs.width = cw; cvs.height = chh; const g = cvs.getContext('2d');
+        g.beginPath(); c.poly.forEach(([x, y], q) => q ? g.lineTo(x - x0, y - y0) : g.moveTo(x - x0, y - y0)); g.closePath();
+        g.save(); g.clip(); g.drawImage(im, r.x - x0, r.y - y0, r.w, r.h); g.fillStyle = 'rgba(190,240,255,.2)'; g.fill(); g.restore();
+        g.strokeStyle = 'rgba(255,255,255,.95)'; g.lineWidth = 1.2; g.stroke();
+        g.save(); g.clip(); g.lineWidth = 1; const nL = 4 + (R() * 5 | 0);
+        for (let q = 0; q < nL; q++) { const px = R() * cw, py = R() * chh, an = R() * Math.PI, L = Math.max(cw, chh);
+          g.strokeStyle = `rgba(255,255,255,${.45 + R() * .45})`; g.beginPath();
+          g.moveTo(px - Math.cos(an) * L, py - Math.sin(an) * L); g.lineTo(px + Math.cos(an) * L, py + Math.sin(an) * L); g.stroke();
+          if (R() < .5) { g.fillStyle = `rgba(${R() < .5 ? '255,255,255' : '120,200,255'},${.08 + R() * .12})`; g.beginPath();
+            g.moveTo(px, py); g.lineTo(px + (R() - .5) * cw, py + (R() - .5) * chh); g.lineTo(px + (R() - .5) * cw, py + (R() - .5) * chh); g.fill(); } }
+        g.restore();
+        const mx = (x0 + x1) / 2, my = (y0 + y1) / 2, dx = mx - dia.ix, dy = my - dia.iy, d = Math.hypot(dx, dy) || 1;
+        const sp = 8 + R() * 22 * (1 - Math.min(.6, d / dia.D)), spread = (R() - .5) * .6, ca = Math.cos(spread), sa = Math.sin(spread);
+        const ux = dx / d, uy = dy / d;
+        parts.push({ t: 'sh', x: mx, y: my, img: cvs, w: cw, h: chh, vx: (ux * ca - uy * sa) * sp, vy: (ux * sa + uy * ca) * sp,
+          a: 0, va: (R() - .5) * .5, sc: 1, vs: -(.008 + R() * .01), life: 1, decay: .014 + R() * .012 }); });
+      boom(dia.ix, dia.iy, 180, 17, 4, 180, 215, 70, 95);
+      for (let i = 0; i < 500; i++) { const a = R() * Math.PI * 2, sp = 3 + R() * 26;
+        parts.push({ t: 'd', x: dia.ix, y: dia.iy, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, life: 1, decay: .012 + R() * .02, size: 1 + R() * 2.2,
+          col: R() < .5 ? '#ffffff' : (R() < .5 ? '#9eeeff' : '#5fb8ff') }); } ring(dia.ix, dia.iy, 2.0, 190); ring(dia.ix, dia.iy, 1.3, 200);
+      pop(.85, 350);
+    }
+    if (t >= S.shatter) {
+      const u = t - S.shatter, fade = clamp(u / 250);
+      srays.style.opacity = .7 * fade; srays.style.transform = `rotate(${rot * .5}deg)`;
+      srays2.style.opacity = .6 * fade; srays2.style.transform = `rotate(${-rot * .3}deg) scale(${1 + .04 * Math.sin(u / 200)})`;
+      if (u < 380) { const a = 18 * (1 - u / 380); stage.style.transform = `translate(${(R() - .5) * a}px,${(R() - .5) * a}px)`; }
+      else stage.style.transform = '';
+      if (R() < .35) star(R() < .5 ? '#ffffff' : '#9eeeff');
+      if (R() < .25) parts.push({ t: 'f', x: R() * W, y: -10, vy: .6 + R() * 1.4, ph: R() * 6, size: 1 + R() * 2.5 });
+    }
+    if (t >= S.card && !card.classList.contains('show')) {
+      cardWrap.classList.add('ssr'); card.classList.add('ssr');
+      cardWrap.style.transition = 'opacity .15s'; cardWrap.style.opacity = 1; card.classList.add('show'); pop(.5, 250);
+      boom(W / 2, H / 2, 120, 12, 3, 185, 210, 70, 95);
+    }
+  }
+
+  // ===== UR 前段：柱の連鎖 =====
+  const P = { s1: 0, s1e: 350, s2: 900, s2e: 1250, alt: 1850, altE: 3850, blue: 3850, rb: 4500, end: 5350 };
+  let preDone = false, preHits = {};
+  function urPreDraw(t) {
+    const cx = W / 2;
+    ctx.globalCompositeOperation = 'lighter';
+    const fall = (t0, dur) => clamp((t - t0) / dur);
+    if (t < P.s1e) { const p = fall(P.s1, 180), a = t < 200 ? 1 : 1 - (t - 200) / 150; pillar(cx, 0, H * 1.05 * p * p, 10, 'silver', a); }
+    if (t >= P.s2 && t < P.s2e) { const p = fall(P.s2, 180), a = t < P.s2 + 200 ? 1 : 1 - (t - P.s2 - 200) / 100; pillar(cx, 0, H * 1.05 * p * p, 10, 'silver', a); }
+    if (t >= P.alt && t < P.blue) { const p = (t - P.alt) / (P.altE - P.alt), w = 10 + p * 34, col = altColor(t);
+      pillar(cx, 0, H, w, col, 1); glowAt(cx, H, 60 + p * 90, col === 'gold' ? '255,210,90' : '220,228,240', .7); }
+    if (t >= P.blue && t < P.rb + 300) { const p = fall(P.blue, 150), a = t < P.rb ? 1 : 1 - (t - P.rb) / 300; pillar(cx, 0, H * 1.05 * p * p, 92, 'blue', a);
+      if (p >= 1) glowAt(cx, H, 220, '120,210,255', a); }
+    ctx.globalCompositeOperation = 'source-over';
+  }
+  // 銀と金の入れ替わり：間隔が 500ms → 30ms へ加速
+  let altN = 0, lastAltN = -1;
+  function altColor(t) {
+    const L = P.altE - P.alt, u = clamp((t - P.alt) / L), a = 750, b = 30, r = Math.log(a / b) / L;
+    const n = Math.floor((Math.exp(r * u * L) - 1) / (r * a)); // 累積切替回数
+    altN = n; return n % 2 ? 'gold' : 'silver';
+  }
+  function rbpUpdate(t) {
+    // t は前段の時間軸（P.end 以降も続けて呼ぶ）
+    if (t < P.rb) { rbp.style.opacity = 0; return; }
+    const p = clamp((t - P.rb) / 260), y = (1 - (1 - Math.pow(1 - p, 3))) * H;
+    const grow = clamp((t - P.rb - 200) / 400), w = 170 + grow * (W > H ? W * .3 : W * .42);
+    const pulse = 1 + .04 * Math.sin(t / 60);
+    rbp.style.opacity = 1; rbp.style.width = w + 'px';
+    rbp.style.transform = `translate(-50%, ${y}px) scaleX(${pulse})`;
+    rbp.style.filter = `blur(3px) hue-rotate(${(t / 6) % 360}deg) brightness(${1.05 + .15 * Math.sin(t / 45)})`;
+  }
+  function urPreLogic(t) {
+    if (!bgm) playBgm(BGM_HOOK - UR_TITLE_AT + t / 1000, Math.max(0, (P.rb - t) / 1000));
+    once('u1', true, () => sfx('r'));
+    once('u2', t >= P.s2, () => sfx('r'));
+    if (t >= P.alt && t < P.blue) { const col = altColor(t); if (altN !== lastAltN) { lastAltN = altN; sfx(col === 'gold' ? 'sr' : 'r', .7); } }
+    once('ub', t >= P.blue, () => sfx('ssr1'));
+    dark.style.opacity = clamp(t / 150);
+    const hit = (key, at, fn) => { if (t >= at && !preHits[key]) { preHits[key] = true; fn(); } };
+    const sh = (a) => { stage.style.transform = `translate(${(R() - .5) * a}px,${(R() - .5) * a}px)`; };
+    hit('s1', 180, () => boom(W / 2, H, 30, 6, 2, 210, 220, 85, 95));
+    hit('s2', P.s2 + 180, () => boom(W / 2, H, 30, 6, 2, 210, 220, 85, 95));
+    hit('bl', P.blue + 150, () => { boom(W / 2, H, 140, 12, 3, 190, 215, 65, 90); pop(.3, 200); });
+    hit('rb', P.rb, () => { pop(.45, 220); boom(W / 2, H, 160, 14, 3); });
+    if (t >= P.alt && t < P.blue) sh(2 + (t - P.alt) / 120);
+    else if (t >= P.blue + 150 && t < P.blue + 350) sh(10);
+    else if (t >= P.rb && t < P.rb + 500) sh(16 * (1 - (t - P.rb) / 500));
+    else stage.style.transform = '';
+    rbpUpdate(t);
+  }
+
+  // ===== SR =====
+  const SRT = { fall: 0, land: 300, card: 600, end: 1500 };
+  let srLanded = false;
+  function srDraw(t) {
+    const cx = W / 2, cy = H / 2;
+    ctx.globalCompositeOperation = 'lighter';
+    if (t < SRT.land) {
+      const p = t / SRT.land, head = -H * .2 + (cy + H * .2) * p * p, w = 46;
+      if (head > 0) {
+        const bw = w * 1.6, g = ctx.createLinearGradient(cx - bw / 2, 0, cx + bw / 2, 0);
+        g.addColorStop(0, 'rgba(255,190,50,0)'); g.addColorStop(.25, 'rgba(255,200,60,.55)'); g.addColorStop(.42, 'rgba(255,225,120,.9)');
+        g.addColorStop(.5, 'rgba(255,253,235,1)'); g.addColorStop(.58, 'rgba(255,225,120,.9)'); g.addColorStop(.75, 'rgba(255,200,60,.55)'); g.addColorStop(1, 'rgba(255,190,50,0)');
+        ctx.fillStyle = g; const rr = bw / 2, yb = Math.max(0, head - rr); ctx.beginPath(); ctx.moveTo(cx - rr, 0); ctx.lineTo(cx - rr, yb);
+        ctx.arc(cx, yb, rr, Math.PI, 0, true); ctx.lineTo(cx + rr, 0); ctx.closePath(); ctx.fill();
+        const hg = ctx.createRadialGradient(cx, head, 0, cx, head, w * 1.4);
+        hg.addColorStop(0, 'rgba(255,255,245,1)'); hg.addColorStop(.4, 'rgba(255,225,130,.7)'); hg.addColorStop(1, 'rgba(255,200,60,0)');
+        ctx.fillStyle = hg; ctx.beginPath(); ctx.arc(cx, head, w * 1.4, 0, Math.PI * 2); ctx.fill();
+      }
+    } else {
+      const u = t - SRT.land, p = clamp(u / 700), w = 46 + p * W * .7, a = (1 - p) * .85;
+      if (a > 0) { const g = ctx.createLinearGradient(cx - w / 2, 0, cx + w / 2, 0);
+        g.addColorStop(0, 'rgba(255,190,50,0)'); g.addColorStop(.5, `rgba(255,230,140,${a})`); g.addColorStop(1, 'rgba(255,190,50,0)');
+        ctx.fillStyle = g; ctx.fillRect(cx - w / 2, 0, w, H);
+        const gl = ctx.createRadialGradient(cx, cy, 0, cx, cy, 160 + p * 200);
+        gl.addColorStop(0, `rgba(255,240,180,${a})`); gl.addColorStop(1, 'rgba(255,200,60,0)');
+        ctx.fillStyle = gl; ctx.fillRect(0, 0, W, H); }
+    }
+    ctx.globalCompositeOperation = 'source-over';
+  }
+  function srLogic(t) {
+    once('sr', t >= SRT.land - 70, () => sfx('sr'));
+    dark.style.opacity = Math.min(.6, t / 150 * .6);
+    if (t >= SRT.land && !srLanded) {
+      srLanded = true; boom(W / 2, H / 2, 150, 12, 3, 38, 52, 60, 85); ring(W / 2, H / 2, 1.5, 44); pop(.35, 220);
+    }
+    const u = t - SRT.land;
+    if (u >= 0 && u < 200) { const a = 8 * (1 - u / 200); stage.style.transform = `translate(${(R() - .5) * a}px,${(R() - .5) * a}px)`; }
+    else stage.style.transform = '';
+    if (t >= SRT.card && R() < .2) star(R() < .5 ? '#fff1b8' : '#ffd34d');
+    if (t >= SRT.card && !card.classList.contains('show')) {
+      cardWrap.classList.add('sr'); card.classList.add('sr');
+      cardWrap.style.transition = 'opacity .15s'; cardWrap.style.opacity = 1; card.classList.add('show');
+    }
+  }
+
+  // ===== R =====
+  const RT = { slash: 0, slashEnd: 200, card: 250, end: 1000 };
+  let rDust = false;
+  function rDraw(t) {
+    if (t > 450) return;
+    const x0 = W / 2, y0 = -H * .05, x1 = W / 2, y1 = H * 1.05;
+    const p = clamp(t / RT.slashEnd), e = 1 - Math.pow(1 - p, 3), fade = t < RT.slashEnd ? 1 : 1 - (t - RT.slashEnd) / 250;
+    const hx = x0 + (x1 - x0) * e, hy = y0 + (y1 - y0) * e, tail = Math.max(0, e - .45), tx = x0 + (x1 - x0) * tail, ty = y0 + (y1 - y0) * tail;
+    ctx.globalCompositeOperation = 'lighter'; ctx.lineCap = 'round';
+    const g = ctx.createLinearGradient(tx, ty, hx, hy); g.addColorStop(0, 'rgba(200,210,225,0)'); g.addColorStop(1, `rgba(235,242,250,${.8 * fade})`);
+    ctx.strokeStyle = g; ctx.lineWidth = 14; ctx.beginPath(); ctx.moveTo(tx, ty); ctx.lineTo(hx, hy); ctx.stroke();
+    ctx.strokeStyle = `rgba(255,255,255,${fade})`; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(tx, ty); ctx.lineTo(hx, hy); ctx.stroke();
+    ctx.globalCompositeOperation = 'source-over';
+  }
+  function rLogic(t) {
+    once('r', true, () => sfx('r'));
+    if (t >= 120 && !rDust) { rDust = true;
+      for (let i = 0; i < 90; i++) { const f = R(), x = W / 2 + (R() - .5) * 16, y = H * (-.05 + 1.1 * f);
+        parts.push({ t: 'd', x, y, vx: (R() - .5) * 5, vy: (R() - .5) * 1.5 - .3, life: 1, decay: .015 + R() * .02, size: 1 + R() * 2, col: R() < .5 ? '#ffffff' : '#c9d1da' }); } }
+    if (t >= RT.card && !card.classList.contains('show')) {
+      cardWrap.classList.add('r'); card.classList.add('r');
+      cardWrap.style.transition = 'opacity .15s'; cardWrap.style.opacity = 1; card.classList.add('show');
+    }
+  }
+
+  // ===== UC / C（共通、縁の色だけ違う）=====
+  const CT = { card: 60, end: 700 };
+  function cLogic(t) {
+    once('c', t >= CT.card, () => sfx('c'));
+    if (t >= CT.card && !card.classList.contains('show')) {
+      const k = mode === 'UC' ? 'uc' : 'c';
+      cardWrap.classList.add(k); card.classList.add(k);
+      cardWrap.style.transition = 'opacity .12s'; cardWrap.style.opacity = 1; card.classList.add('show');
+    }
+  }
+
+  function reset() {
+    onceSet = {};
+    parts = []; burstDone = false; rot = 0; cur = -1; nextFw = 0; nextRing = 0;
+    PANELS.forEach(P => P.el.style.opacity = 0);
+    [dark, flash, rbp, sub, urbg, urshade, rays1, rays2, urtext, edge, cardWrap, ssrbg, srays, srays2, stex, sband, spulse].forEach(e => e.style.opacity = 0);
+    card.classList.remove('ssr', 'sr', 'r', 'uc', 'c'); cardWrap.classList.remove('ssr', 'sr', 'r', 'uc', 'c'); srLanded = false; rDust = false; preDone = false; preHits = {}; openHits = {}; lastAltN = -1; dia = null; shattered = false;
+    flash.style.transition = 'none'; cardWrap.style.transition = 'none'; card.classList.remove('show'); stage.style.transform = ''; ctx.clearRect(0, 0, W, H);
+  }
+  function pop(o, ms) {
+    flash.style.transition = 'none'; flash.style.opacity = o;
+    requestAnimationFrame(() => requestAnimationFrame(() => { flash.style.transition = `opacity ${ms}ms ease-out`; flash.style.opacity = 0; }));
+  }
+
+  function frame(now) {
+    if (!running) return;
+    let t = now - start; const dt = Math.min(50, now - (prev || now)); prev = now;
+    const k = dt / 16.67; rot += dt * .09;
+
+    if (mode === 'OPEN') openLogic(t); else if (mode === 'SSR') ssrLogic(t); else if (mode === 'SR') srLogic(t); else if (mode === 'R') rLogic(t); else if (mode === 'UC' || mode === 'C') cLogic(t); else if (t < P.end) urPreLogic(t); else {
+    t -= P.end;
+    if (!preDone) { preDone = true; }
+    if (!bgm && t < T.card + 450) playBgm(BGM_HOOK - (T.card + 450 - t) / 1000, 0);
+    dark.style.opacity = t < T.burst ? 1 : 0;
+    if (t < T.burst) rbpUpdate(t + P.end); else rbp.style.opacity = 0;
+
+    // ===== フラッシュバック（対角線に2枚ずつ）=====
+    let idx = -1;
+    for (let i = CUTS.length - 1; i >= 0; i--) if (t >= CUTS[i].s) { idx = i; break; }
+    if (t < T.burst && idx >= 0) {
+      const c = CUTS[idx];
+      if (idx !== cur) { cur = idx; pop(.75, 140); triggerSlash(); sub.style.opacity = 0; PANELS.forEach(P => P.el.style.opacity = 0); }
+      const mx = W * .04, top = H * .5 - PH - H * .02, bot = H * .5 + H * .02;
+      const pos = idx % 2 === 0 ? [[mx, top], [W - PW - mx, bot]] : [[W - PW - mx, top], [mx, bot]];
+      PANELS.forEach((Pn, j) => {
+        const st = c.s + j * 160, local = t - st; if (local < 0) return;
+        const p = clamp(local / (c.d - j * 160)), si = c.pair[j];
+        FC = Pn.cv; fctx = Pn.cx;
+        const zoom = 1.08 + .45 * Math.exp(-local / 60) + .1 * p;
+        const shift = .035 * Math.exp(-local / 90) + (R() < c.g * .35 ? R() * .025 : 0);
+        drawFilm(si, zoom, shift);
+        if (R() < c.g * .55) slices(2 + (R() * 6 | 0));
+        speedLines(local < 220 ? .55 * (1 - local / 220) : (R() < c.g * .3 ? .25 : 0));
+        let f = 'saturate(1.5) contrast(1.2)';
+        if (local < 45) f = R() < .5 ? 'grayscale(1) contrast(6)' : 'invert(1) grayscale(1) contrast(5)';
+        else if (R() < c.g * .12) f = 'invert(1) hue-rotate(180deg) saturate(2)';
+        else if (R() < c.g * .22) f = `hue-rotate(${R() * 360 | 0}deg) saturate(2.5) contrast(1.3)`;
+        Pn.cv.style.filter = f;
+        const sx = (R() - .5) * c.shake, sy = (R() - .5) * c.shake, tilt = (j ? 3 : -3) * (idx % 2 ? -1 : 1);
+        const enter = 1 + .35 * Math.exp(-local / 70);
+        Pn.el.style.opacity = clamp(local / 60);
+        Pn.el.style.transform = `translate(${pos[j][0] + sx}px, ${pos[j][1] + sy}px) rotate(${tilt}deg) scale(${enter})`;
+      });
+      stage.style.transform = `translate(${(R() - .5) * 2}px,${(R() - .5) * 2}px)`;
+      if (idx === CUTS.length - 1 && t > T.burst - 160) { flash.style.transition = 'none'; flash.style.opacity = clamp((t - (T.burst - 160)) / 160); }
+    }
+
+    // ===== UR爆発 =====
+    if (t >= T.burst && !burstDone) {
+      burstDone = true; PANELS.forEach(P => P.el.style.opacity = 0); rbp.style.opacity = 0;
+      boom(W / 2, H / 2, 600, 20, 5); ring(W / 2, H / 2, 2.2); ring(W / 2, H / 2, 1.6); ring(W / 2, H / 2, 1.1);
+      flash.style.transition = 'none'; flash.style.opacity = 1;
+      requestAnimationFrame(() => { flash.style.transition = 'opacity .45s ease-out'; flash.style.opacity = 0; });
+      nextFw = t + 250; nextRing = t + 400;
+    }
+    if (t >= T.burst) {
+      const u = t - T.burst, fade = clamp(u / 300);
+      urbg.style.opacity = fade; urbg.style.transform = `rotate(${rot * .6}deg)`; urbg.style.filter = `hue-rotate(${(u / 4) % 360}deg) saturate(1.6) brightness(${.75 + .25 * Math.sin(u / 120)})`;
+      urshade.style.opacity = fade;
+      rays1.style.opacity = .8 * fade; rays1.style.transform = `rotate(${rot}deg)`;
+      rays2.style.opacity = .7 * fade; rays2.style.transform = `rotate(${-rot * 1.4}deg) scale(${1 + .06 * Math.sin(u / 90)})`;
+      urtext.style.opacity = fade;
+      edge.style.opacity = .6 + .4 * Math.sin(u / 80);
+      edge.style.boxShadow = `inset 0 0 ${8 + 4 * Math.sin(u / 80)}vmin ${2 + Math.sin(u / 80)}vmin hsl(${(u / 2) % 360},100%,60%)`;
+      if (u < 500) { const a = 22 * (1 - u / 500); stage.style.transform = `translate(${(R() - .5) * a}px,${(R() - .5) * a}px)`; }
+      else stage.style.transform = '';
+      if (t >= nextFw) { boom(W * (.1 + R() * .8), H * (.1 + R() * .7), 70 + (R() * 50 | 0), 9, 3); nextFw = t + 280 + R() * 300; }
+      if (t >= nextRing) { ring(W / 2, H / 2, 1.4); nextRing = t + 480; }
+      for (let i = 0; i < 3; i++) confetti();
+      if (R() < .6) star();
+    }
+    if (t >= T.card && !card.classList.contains('show')) {
+      cardWrap.style.transition = 'opacity .15s'; cardWrap.style.opacity = 1; card.classList.add('show'); pop(.7, 250);
+      boom(W / 2, H / 2, 200, 14, 4);
+    }
+    t += P.end;
+    }
+
+    // ===== 描画 =====
+    ctx.clearRect(0, 0, W, H);
+    if (mode === 'OPEN') openDraw(t); if (mode === 'SSR') ssrDraw(t); if (mode === 'SR') srDraw(t); if (mode === 'R') rDraw(t);
+    ctx.globalCompositeOperation = 'lighter';
+    if (mode === 'UR' && t < P.end) urPreDraw(t);
+    if (mode === 'UR' && t - P.end >= T.burst) flares(t - P.end);
+    parts = parts.filter(p => {
+      if (p.t === 'r') {
+        p.r += dt * p.sp; p.life -= dt / 900; if (p.life <= 0) return false;
+        ctx.lineWidth = 14 * p.life + 2;
+        for (let i = 0; i < 36; i++) { ctx.strokeStyle = p.hue != null ? `hsla(${p.hue + (i % 6) * 4},100%,${75 + (i % 3) * 8}%,${p.life})` : `hsla(${i * 10 + rot * 3},100%,65%,${p.life})`;
+          ctx.beginPath(); ctx.arc(p.x, p.y, p.r, i / 36 * Math.PI * 2, (i + 1.05) / 36 * Math.PI * 2); ctx.stroke(); }
+        return true;
+      }
+      if (p.t === 'k') { const dx = W / 2 - p.x, dy = H / 2 - p.y, d = Math.hypot(dx, dy) || 1, sp = Math.min(d, (5 + 2400 / d) * k);
+        p.x += dx / d * sp; p.y += dy / d * sp; if (d < 25) return false;
+        ctx.globalAlpha = .9; ctx.fillStyle = p.col; ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2); ctx.fill(); return true; }
+      if (p.t === 'f') { p.ph += .05 * k; p.x += Math.sin(p.ph) * .6 * k; p.y += p.vy * k; if (p.y > H + 10) return false;
+        ctx.globalAlpha = .8; ctx.fillStyle = '#bff4ff'; ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2); ctx.fill(); return true; }
+      if (p.t === 'd') { const f = Math.pow(.95, k); p.vx *= f; p.vy *= f; p.x += p.vx * k; p.y += p.vy * k; p.life -= p.decay * k;
+        if (p.life <= 0) return false; ctx.globalAlpha = p.life; ctx.fillStyle = p.col; ctx.fillRect(p.x, p.y, p.size, p.size); return true; }
+      if (p.t === 'sh') { const f = Math.pow(.97, k); p.vx *= f; p.vy *= f; p.x += p.vx * k; p.y += p.vy * k; p.a += p.va * k; p.sc = Math.max(.12, p.sc + p.vs * k);
+        p.life -= p.decay * k; if (p.life <= 0) return false;
+        ctx.save(); ctx.globalCompositeOperation = 'source-over'; ctx.translate(p.x, p.y); ctx.rotate(p.a); ctx.scale(p.sc, p.sc);
+        ctx.globalAlpha = clamp(p.life * 1.5); ctx.drawImage(p.img, -p.w / 2, -p.h / 2); ctx.restore(); return true; }
+      if (p.t === 's') { p.life -= p.decay * k; if (p.life <= 0) return false; ctx.globalAlpha = 1; drawStar(p); return true; }
+      if (p.t === 'c') {
+        p.ph += .1 * k; p.x += (p.vx + Math.sin(p.ph) * 1.2) * k; p.y += p.vy * k; p.a += p.va * k;
+        if (p.y > H + 30) return false;
+        ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1;
+        ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.a); ctx.scale(1, Math.cos(p.ph * 1.7)); ctx.fillStyle = p.col;
+        ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h); ctx.restore(); ctx.globalCompositeOperation = 'lighter';
+        return true;
+      }
+      const f = Math.pow(.955, k); p.vx *= f; p.vy *= f; p.vy += .05 * k;
+      p.x += p.vx * k; p.y += p.vy * k; p.life -= p.decay * k; if (p.life <= 0) return false;
+      ctx.globalAlpha = clamp(p.life); ctx.fillStyle = p.col; ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2); ctx.fill();
+      return true;
+    });
+    if (parts.length > 1600) parts.splice(0, parts.length - 1600);
+    ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
+
+    const endT = mode === 'OPEN' ? OT.end : mode === 'SSR' ? S.end : mode === 'SR' ? SRT.end : mode === 'R' ? RT.end : (mode === 'UC' || mode === 'C') ? CT.end : T.end + P.end;
+    if (ten) { if (t >= endT + (mode === 'OPEN' ? 0 : 800)) { advanceTen(); return; } }
+    else if (t >= endT && !btn.dataset.done) { setBtns(false); btn.dataset.done = '1'; ui.style.opacity = 1; $('share').style.display = 'block'; }
+    requestAnimationFrame(frame);
+  }
+
+  // ===================== ゲーム本体 =====================
+  const SITE_URL = 'https://cceight.github.io/wiki-gacha/';
+  const ALLBTN = () => [$('one'), $('tenBtn')];
+  function setBtns(d) { ALLBTN().forEach(b => b.disabled = d); }
+  const RANK = { C: 0, UC: 1, R: 2, SR: 3, SSR: 4, UR: 5 };
+  const KIND = { UR: '秀逸な記事', SSR: '良質な記事' };
+  const leadEl = document.querySelector('.lead'), thumbEl = $('thumb'), srcEl = $('src');
+  let current = null; // 表示中の記事
+
+  function fillCard(it) {
+    current = it;
+    badge.textContent = it.rarity; kindEl.textContent = KIND[it.rarity] || '';
+    titleEl.textContent = it.title;
+    let ex = (it.extract || '').replace(/\s+/g, ' ').trim();
+    if (ex.length > 110) ex = ex.slice(0, 110) + '…';
+    leadEl.textContent = ex || '（この記事には要約がありません）';
+    if (it.thumb) { thumbEl.src = it.thumb; thumbEl.style.display = 'block'; } else { thumbEl.removeAttribute('src'); thumbEl.style.display = 'none'; }
+    let s = `出典：Wikipedia「${it.title}」（CC BY-SA 4.0）`;
+    if (it.thumb) s += `／画像：${it.imgArtist || '作者不明'}（${it.imgLicense || 'ライセンスは画像ページを参照'}）`;
+    srcEl.textContent = s;
+  }
+  function startRun(m, item) {
+    running = false; mode = m; reset(); setBtns(true); delete btn.dataset.done; hint.style.opacity = 0; ui.style.opacity = 0; $('share').style.display = 'none';
+    if (item) fillCard(item);
+    requestAnimationFrame(() => { resize(); running = true; prev = 0; start = performance.now(); requestAnimationFrame(frame); });
+  }
+
+  // ---------- Wikipedia API ----------
+  const API = 'https://ja.wikipedia.org/w/api.php', REST = 'https://ja.wikipedia.org/api/rest_v1/page/summary/';
+  async function api(params) {
+    const u = API + '?' + new URLSearchParams({ ...params, format: 'json', formatversion: 2, origin: '*' });
+    const r = await fetch(u); if (!r.ok) throw new Error('api ' + r.status); return r.json();
+  }
+  async function pool(key, loader) {
+    try { const c = JSON.parse(localStorage.getItem('wg_' + key) || 'null'); if (c && Date.now() - c.at < 864e5 && c.list.length) return c.list; } catch (e) {}
+    const list = await loader();
+    try { localStorage.setItem('wg_' + key, JSON.stringify({ at: Date.now(), list })); } catch (e) {}
+    return list;
+  }
+  async function catMembers(cat) {
+    const out = []; let cont = {};
+    for (let n = 0; n < 12; n++) {
+      const j = await api({ action: 'query', list: 'categorymembers', cmtitle: 'Category:' + cat, cmlimit: 500, ...cont });
+      (j.query.categorymembers || []).forEach(m => { if (m.ns === 0) out.push(m.title); else if (m.ns === 1) out.push(m.title.replace(/^ノート:/, '')); });
+      if (!j.continue) break; cont = { cmcontinue: j.continue.cmcontinue };
+    }
+    return [...new Set(out)];
+  }
+  const urPool = pool('ur', async () => [...await catMembers('秀逸な記事'), ...await catMembers('秀逸な一覧')]);
+  const ssrPool = pool('ssr', () => catMembers('良質な記事'));
+  let srPoolP = null;
+  const srPool = () => srPoolP || (srPoolP = pool('sr', async () => {
+    const j = await api({ action: 'query', list: 'querypage', qppage: 'Mostlinked', qplimit: 500 });
+    return (j.query.querypage.results || []).filter(r => r.ns === 0).map(r => r.title);
+  }));
+  urPool.catch(() => {}); ssrPool.catch(() => {});
+  const pick = a => a[Math.floor(R() * a.length)];
+
+  async function randomTitles(n) {
+    const out = [];
+    for (let k = 0; k < 4 && out.length < n; k++) {
+      const j = await api({ action: 'query', generator: 'random', grnnamespace: 0, grnlimit: Math.min(20, (n - out.length) * 2), prop: 'pageprops', ppprop: 'disambiguation' });
+      (j.query.pages || []).forEach(p => { if (!(p.pageprops && 'disambiguation' in p.pageprops) && out.length < n && !out.includes(p.title)) out.push(p.title); });
+    }
+    return out;
+  }
+  async function backlinks(title) {
+    const j = await api({ action: 'query', list: 'search', srsearch: `linksto:"${title}"`, srnamespace: 0, srlimit: 1, srinfo: 'totalhits', srprop: '' });
+    return j.query.searchinfo.totalhits;
+  }
+  // 被リンク数の区切り（暫定値：ランダム200記事の実測から）
+  const rankByLinks = n => n <= 21 ? 'C' : n <= 102 ? 'UC' : n <= 247 ? 'R' : 'SR';
+
+  async function mapLimit(arr, lim, fn) {
+    const res = new Array(arr.length); let i = 0;
+    await Promise.all(Array.from({ length: Math.min(lim, arr.length) }, async () => { while (i < arr.length) { const k = i++; res[k] = await fn(arr[k], k); } }));
+    return res;
+  }
+  // 抽選：先にUR/SSRだけ判定、外れたらランダム記事の被リンク数でC〜SR
+  async function drawMany(n, guaranteeLast) {
+    const slots = [];
+    for (let i = 0; i < n; i++) {
+      const g = guaranteeLast && i === n - 1, x = R() * (g ? 5 : 100);
+      slots.push(x < .05 ? 'UR' : x < 1 ? 'SSR' : g ? 'SR*' : 'RAND');
+    }
+    const need = slots.filter(s => s === 'RAND').length;
+    const rand = need ? await randomTitles(need) : [];
+    let ri = 0;
+    const items = await mapLimit(slots, 3, async s => {
+      if (s === 'UR') return { title: pick(await urPool), rarity: 'UR' };
+      if (s === 'SSR') return { title: pick(await ssrPool), rarity: 'SSR' };
+      if (s === 'SR*') return { title: pick(await srPool()), rarity: 'SR' };
+      const title = rand[ri++]; let c = 0; try { c = await backlinks(title); } catch (e) {}
+      return { title, rarity: rankByLinks(c) };
+    });
+    return items;
+  }
+  async function details(items) {
+    await mapLimit(items, 4, async it => {
+      try {
+        const j = await fetch(REST + encodeURIComponent(it.title.replace(/ /g, '_'))).then(r => r.json());
+        it.title = j.title || it.title; it.extract = j.extract || '';
+        it.url = (j.content_urls && (j.content_urls.mobile || j.content_urls.desktop).page) || ('https://ja.wikipedia.org/wiki/' + encodeURIComponent(it.title));
+        if (j.thumbnail) { it.thumb = j.thumbnail.source; it.file = decodeURIComponent((j.originalimage || j.thumbnail).source.split('/').pop()); }
+      } catch (e) { it.url = 'https://ja.wikipedia.org/wiki/' + encodeURIComponent(it.title); }
+    });
+    const files = [...new Set(items.filter(i => i.file).map(i => 'File:' + i.file))];
+    if (files.length) try {
+      const j = await api({ action: 'query', titles: files.join('|'), prop: 'imageinfo', iiprop: 'extmetadata', iiextmetadatafilter: 'Artist|LicenseShortName' });
+      const meta = {}; (j.query.pages || []).forEach(p => { const m = p.imageinfo && p.imageinfo[0] && p.imageinfo[0].extmetadata; if (m) meta[p.title.replace(/^(File|ファイル):/, '')] = m; });
+      const norm = j.query.normalized || [];
+      items.forEach(it => { if (!it.file) return; let key = 'File:' + it.file; const nm = norm.find(x => x.from === key); key = (nm ? nm.to : key).replace(/^(File|ファイル):/, '');
+        const m = meta[key]; if (m) { const tmp = document.createElement('div'); tmp.innerHTML = (m.Artist && m.Artist.value) || ''; it.imgArtist = tmp.textContent.trim().slice(0, 40); it.imgLicense = m.LicenseShortName && m.LicenseShortName.value; } });
+    } catch (e) {}
+    return items;
+  }
+  function loading(on, msg) { const l = $('loading'); l.textContent = msg || '記事を探しています…'; l.style.display = on ? 'flex' : 'none'; }
+  async function fetchItems(n, guarantee) {
+    loading(true); setBtns(true); ui.style.opacity = 0; $('share').style.display = 'none';
+    try { const items = await details(await drawMany(n, guarantee)); loading(false); return items; }
+    catch (e) { loading(true, '通信に失敗しました。少し待ってからもう一度どうぞ'); setTimeout(() => { loading(false); setBtns(false); ui.style.opacity = 1; }, 2200); return null; }
+  }
+
+  // ---------- 単発 ----------
+  $('one').addEventListener('click', async () => {
+    unlockAudio(); ten = null; stopBgm();
+    const items = await fetchItems(1, false); if (!items) return;
+    lastResult = items; startRun(items[0].rarity, items[0]);
+  });
+
+  // ---------- 10連 ----------
+  let ten = null, lastResult = null;
+  $('tenBtn').addEventListener('click', async () => {
+    unlockAudio(); stopBgm(); cardWrap.style.opacity = 0;
+    let items = await fetchItems(10, false); if (!items) return;
+    if (!items.some(i => RANK[i.rarity] >= 3)) { // SR1個以上確定
+      try { const g = await details(await drawMany(1, true)); items[9] = g[0]; } catch (e) {}
+    }
+    lastResult = items;
+    const maxNoUR = Math.max(...items.filter(i => i.rarity !== 'UR').map(i => RANK[i.rarity]));
+    ten = { items, seq: items.map(i => i.rarity), i: -1, steps: ['silver'].concat(maxNoUR >= 3 ? ['gold'] : []).concat(maxNoUR >= 4 ? ['blue'] : []) };
+    OT.end = ten.steps.length * 600 + 250;
+    skipBtn.style.display = 'block';
+    startRun('OPEN');
+  });
+  function advanceTen() {
+    ten.i++;
+    if (ten.i >= 10) { showList(); return; }
+    startRun(ten.seq[ten.i], ten.items[ten.i]);
+  }
+  function showList() {
+    running = false; const items = ten ? ten.items : []; ten = null; skipBtn.style.display = 'none';
+    reset(); dark.style.opacity = 1;
+    const grid = $('grid'); grid.innerHTML = '';
+    items.forEach((it, i) => {
+      const a = document.createElement('a'); a.className = 'mini ' + it.rarity; a.href = it.url; a.target = '_blank'; a.rel = 'noopener';
+      const th = document.createElement('div'); th.className = 'th'; if (it.thumb) th.style.backgroundImage = `url("${it.thumb}")`;
+      const tx = document.createElement('div'); const b = document.createElement('span'); b.className = 'b'; b.textContent = it.rarity;
+      const tt = document.createElement('div'); tt.className = 'tt'; tt.textContent = it.title; tx.append(b, tt);
+      const inn = document.createElement('div'); inn.className = 'in'; inn.append(th, tx); a.append(inn);
+      grid.appendChild(a); setTimeout(() => a.classList.add('on'), 60 * i);
+    });
+    $('list').style.display = 'flex';
+  }
+  const skipBtn = $('skip');
+  skipBtn.addEventListener('click', () => {
+    if (!ten) return;
+    if (mode === 'UR') { showList(); return; }
+    const j = ten.seq.findIndex((r, k) => r === 'UR' && k > ten.i);
+    if (j >= 0) { ten.i = j - 1; advanceTen(); } else showList();
+  });
+  $('listClose').addEventListener('click', () => { $('list').style.display = 'none'; dark.style.opacity = 0; setBtns(false); ui.style.opacity = 1; });
+
+  // ---------- カードのタップで記事へ ----------
+  $('card').addEventListener('click', () => { if (current && current.url && card.classList.contains('show')) window.open(current.url, '_blank', 'noopener'); });
+
+  // ---------- ポスト ----------
+  const TAG = { UR: '【UR虹】', SSR: '【SSRダイヤ】', SR: '【SR金】', R: '【R銀】', UC: '【UC銅】', C: '【C白】' };
+  function xlen(s) { let n = 0; for (const ch of s) { const c = ch.codePointAt(0);
+    n += (c <= 0x10FF || (c >= 0x2000 && c <= 0x200D) || (c >= 0x2010 && c <= 0x201F) || (c >= 0x2032 && c <= 0x2037)) ? 1 : 2; } return n; }
+  const cut = (t, m) => [...t].length > m ? [...t].slice(0, m).join('') + '…' : t;
+  function postText(items) {
+    const LIMIT = 280 - 24; // URL(23) + 改行
+    if (items.length === 1) {
+      let t = cut(items[0].title, 60), s;
+      while (xlen(s = `Wikiガチャで記事を引いた\n${TAG[items[0].rarity]}『${t}』`) > LIMIT) t = cut([...t].slice(0, -2).join(''), 999);
+      return s;
+    }
+    const sorted = items.map((it, i) => ({ it, i })).sort((a, b) => RANK[b.it.rarity] - RANK[a.it.rarity] || a.i - b.i).map(o => o.it);
+    let s = 'Wikiガチャで10連記事を引いた', used = 0;
+    for (const it of sorted) {
+      const line = `\n${TAG[it.rarity]}『${cut(it.title, 24)}』`;
+      if (xlen(s + line) + 2 > LIMIT) break;
+      s += line; used++;
+    }
+    if (used < sorted.length) s += '\n…';
+    return s;
+  }
+  function openPost() {
+    if (!lastResult) return;
+    const u = 'https://x.com/intent/post?text=' + encodeURIComponent(postText(lastResult)) + '&url=' + encodeURIComponent(SITE_URL);
+    window.open(u, '_blank', 'noopener');
+  }
+  $('share').addEventListener('click', openPost);
+  $('listShare').addEventListener('click', openPost);
+
+  // ---------- クレジット ----------
+  $('creditBtn').addEventListener('click', () => $('credit').style.display = 'flex');
+  $('creditClose').addEventListener('click', () => $('credit').style.display = 'none');
+
+  // ===== 10連の開幕：柱（URは隠す）=====
+  const OT = { end: 1500 };
+  const OW = { silver: 12, gold: 46, blue: 92 };
+  let openHits = {};
+  function openDraw(t) {
+    const cx = W / 2; ctx.globalCompositeOperation = 'lighter';
+    ten.steps.forEach((col, i) => {
+      const s0 = i * 600, last = i === ten.steps.length - 1; if (t < s0) return;
+      const p = clamp((t - s0) / 170), a = last ? 1 : 1 - clamp((t - s0 - 600) / 200); if (a <= 0) return;
+      pillar(cx, 0, H * 1.05 * p * p, OW[col], col, a);
+      if (p >= 1) glowAt(cx, H, OW[col] * 2.6, col === 'blue' ? '120,210,255' : col === 'gold' ? '255,210,90' : '220,228,240', .8 * a);
+    });
+    ctx.globalCompositeOperation = 'source-over';
+  }
+  function openLogic(t) {
+    ten.steps.forEach((col, i) => { const s0 = i * 600;
+      once('o' + i, t >= s0 + (col === 'gold' ? 100 : 0), () => sfx(col === 'gold' ? 'sr' : col === 'blue' ? 'ssr1' : 'r')); });
+    dark.style.opacity = clamp(t / 120);
+    ten.steps.forEach((col, i) => { const at = i * 600 + 170;
+      if (t >= at && !openHits[i]) { openHits[i] = true; boom(W / 2, H, 40 + i * 50, 6 + i * 3, 2.5, col === 'blue' ? 190 : col === 'gold' ? 40 : 210, col === 'blue' ? 215 : col === 'gold' ? 52 : 222, 70, 95); } });
+    const lastLand = (ten.steps.length - 1) * 600 + 170, u = t - lastLand;
+    stage.style.transform = (u >= 0 && u < 200) ? `translate(${(R() - .5) * 8}px,${(R() - .5) * 8}px)` : '';
+    if (t >= OT.end - 200) { flash.style.transition = 'none'; flash.style.opacity = clamp((t - (OT.end - 200)) / 200); }
+  }
+
+  document.addEventListener('pointerdown', unlockAudio, { capture: true });
+  document.addEventListener('click', unlockAudio, { capture: true });
+})();
+</script>
+</body>
+</html>
