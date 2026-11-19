@@ -25,15 +25,24 @@ def log(*a):
     print(time.strftime('%H:%M:%S'), *a, flush=True)
 
 def lines(name):
-    n = shown = 0
+    """ダンプを大きな塊で読む（1行1レコード形式・1行に全部詰めた形式のどちらでも動く）。
+    塊は必ず改行で区切るので、レコードが途中で切れることはない。"""
+    n, tail = 0, b''
     with gzip.open(os.path.join(SRC, name), 'rb') as f:
-        for line in f:
-            if shown < 3 and (b'INSERT' in line[:200] or b'CREATE TABLE' in line[:200] or n < 60):
-                if b'INSERT' in line[:200] or b'CREATE' in line[:200]: log('  sample', name, line[:600]); shown += 1
+        while True:
+            buf = f.read(1 << 26)
+            if not buf:
+                break
+            buf = tail + buf
+            cut = buf.rfind(b'\n')
+            if cut < 0:
+                tail = buf; continue
+            tail = buf[cut + 1:]
             n += 1
-            if line.startswith(b'INSERT INTO'):
-                yield line
-    log('  read lines', name, n)
+            yield buf[:cut + 1]
+    if tail:
+        yield tail
+    log('  read blocks', name, n)
 
 def unesc(b):
     return re.sub(rb'\\(.)', rb'\1', b).decode('utf-8', 'replace')
@@ -77,7 +86,7 @@ cnt_lt = Counter()
 n = 0
 for line in lines('jawiki-latest-pagelinks.sql.gz'):
     cnt_lt.update(RX_PL.findall(line)); n += 1
-    if n % 500 == 0: log('  lines', n)
+    if n % 20 == 0: log('  blocks', n)
 links = Counter()
 for lt, c in cnt_lt.items():
     p = lt2page.get(lt)
