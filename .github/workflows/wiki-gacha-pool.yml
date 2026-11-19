@@ -1,0 +1,43 @@
+name: Wikiガチャ 記事プール作成
+
+on:
+  schedule:
+    - cron: '17 3 4,21 * *'   # 毎月4日と21日（UTC）。ダンプの更新に合わせて月2回
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: wiki-gacha-pool
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: ダンプをダウンロード
+        run: |
+          mkdir -p /tmp/dump && cd /tmp/dump
+          for f in page linktarget pagelinks page_props; do
+            curl -sSfL --retry 5 --retry-delay 30 -A "wiki-gacha-pool/1.0 (https://cceight.github.io/wiki-gacha/)" \
+              -o jawiki-latest-$f.sql.gz "https://dumps.wikimedia.org/jawiki/latest/jawiki-latest-$f.sql.gz"
+          done
+          ls -la
+
+      - name: 記事プールを作成
+        run: python3 wiki-gacha/tools/build_pool.py /tmp/dump wiki-gacha/pool
+
+      - name: コミット
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add wiki-gacha/pool
+          if git diff --cached --quiet; then echo "変更なし"; exit 0; fi
+          git commit -q -m "Wikiガチャ：記事プールを更新 ($(date -u +%Y-%m-%d))"
+          for i in 1 2 3; do git pull -q --rebase origin main && git push -q origin HEAD:main && break; sleep 10; done
