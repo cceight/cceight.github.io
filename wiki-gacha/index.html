@@ -199,6 +199,31 @@
   .lchk { flex: none; display: flex; align-items: center; gap: 2px; font-size: 12px; color: rgba(255,255,255,.75); }
   .lchk input { width: 18px; height: 18px; accent-color: #ffd36b; }
   #logClose { margin: 12px auto 0; }
+  #ui button { width: min(85vw, 360px); min-width: 0; }
+  #ui .sharebtn { width: auto; }
+  #ui .logb { padding: 10px 24px; font-size: 15px; background: rgba(255,255,255,.14); color: #fff; box-shadow: 0 0 0 1px rgba(255,255,255,.35); }
+  #law { position: absolute; inset: 0; z-index: 9; display: none; align-items: center; justify-content: center; background: rgba(0,0,0,.8); padding: 16px; overflow-y: auto; }
+  #law .box { background: #fbfbfd; color: #202122; border-radius: 14px; padding: 18px; width: min(100%, 440px); font-size: 13px; line-height: 1.6; max-height: 100%; overflow-y: auto; }
+  #law h3 { font-size: 16px; margin-bottom: 10px; } #law h4 { font-size: 14px; margin: 14px 0 6px; }
+  #law table { width: 100%; border-collapse: collapse; }
+  #law th, #law td { border-top: 1px solid #e3e5e8; padding: 6px 4px; text-align: left; vertical-align: top; }
+  #law th { white-space: nowrap; color: #54595d; font-weight: 700; width: 1%; padding-right: 10px; }
+  #law .rate td:nth-child(2) { font-weight: 800; white-space: nowrap; width: 1%; padding-right: 10px; }
+  #law .small { font-size: 11px; color: #72777d; margin-top: 10px; }
+  #law button { margin-top: 12px; }
+  #boot { position: absolute; inset: 0; z-index: 20; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; background: #07080f; transition: opacity .35s; }
+  #boot .logo { font-size: clamp(34px, 10vw, 54px); font-weight: 900; background: linear-gradient(90deg, #ff8fa3, #ffd36b, #8fffb0, #8fe6ff, #c39bff);
+    -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+  #boot .bar { width: min(70vw, 280px); height: 6px; border-radius: 3px; background: rgba(255,255,255,.12); overflow: hidden; }
+  #bootBar { width: 0; height: 100%; background: linear-gradient(90deg, #ff8fa3, #ffd36b, #8fffb0, #8fe6ff, #c39bff); transition: width .2s; }
+  #bootPct { font-size: 14px; letter-spacing: .1em; color: rgba(255,255,255,.75); }
+  #boot.ready { cursor: pointer; } #boot.ready #bootPct { color: #fff; animation: blink 1.2s ease-in-out infinite; }
+  #boot.out { opacity: 0; }
+  @keyframes blink { 50% { opacity: .35; } }
+  #law .rate .ltag { display: inline-block; width: 44px; }
+  #foot { flex-wrap: wrap; gap: 2px 12px; padding: 0 8px; bottom: 1.5vh; }
+  #foot button, #foot span { white-space: nowrap; }
+  #foot span { flex-basis: 100%; text-align: center; }
 </style>
 </head>
 <body>
@@ -235,8 +260,8 @@
   <div id="flash" class="full"></div>
 </div>
 <div id="hint"><div class="logo">Wikiガチャ</div><div class="sub">Wikipediaの記事が出るガチャ</div></div>
-<div id="ui"><button id="share" class="sharebtn">結果をポストする</button><button id="one" disabled>読み込み中…</button><button id="tenBtn" class="ten" disabled>読み込み中…</button></div>
-<div id="foot"><button id="logBtn">ログ</button><button id="creditBtn">クレジット</button><span>※点滅する演出があります</span></div>
+<div id="ui"><button id="share" class="sharebtn">結果をポストする</button><button id="logBtn" class="logb">ログ</button><button id="one" disabled>読み込み中…</button><button id="tenBtn" class="ten" disabled>読み込み中…</button></div>
+<div id="foot"><button id="lawBtn">特定商取引法に基づかない表記</button><button id="creditBtn">クレジット</button><span>※点滅する演出があります</span></div>
 <div id="loading"></div>
 <div id="log"><div class="lbox">
   <div class="lhead"><h3>ログ</h3><span id="logCount"></span></div>
@@ -244,6 +269,30 @@
   <div id="logList"></div>
   <button id="logClose">閉じる</button>
 </div></div>
+<div id="law"><div class="box">
+  <h3>特定商取引法に基づかない表記</h3>
+  <table>
+    <tr><th>販売事業者</th><td>ぱっちゲームス</td></tr>
+    <tr><th>販売価格</th><td>0円（税込）</td></tr>
+    <tr><th>商品代金以外の必要料金</th><td>通信料のみ（Wikipediaは無料です）</td></tr>
+    <tr><th>支払方法</th><td>ありません</td></tr>
+    <tr><th>商品の引渡し時期</th><td>ボタンを押した直後</td></tr>
+    <tr><th>返品・交換</th><td>記事はWikipediaにずっとあるので不要です</td></tr>
+    <tr><th>保護者の同意</th><td>必要ありません</td></tr>
+  </table>
+  <h4>提供割合</h4>
+  <table class="rate">
+    <tr><th><span class="ltag UR">UR</span></th><td>0.05%</td><td>秀逸な記事・秀逸な一覧</td></tr>
+    <tr><th><span class="ltag SSR">SSR</span></th><td>0.95%</td><td>良質な記事</td></tr>
+    <tr><th><span class="ltag SR">SR</span></th><td>4%</td><td>とてもよくリンクされている記事</td></tr>
+    <tr><th><span class="ltag R">R</span></th><td>10%</td><td>よくリンクされている記事</td></tr>
+    <tr><th><span class="ltag UC">UC</span></th><td>30%</td><td>ほどほどにリンクされている記事</td></tr>
+    <tr><th><span class="ltag C">C</span></th><td>55%</td><td>あまりリンクされていない記事</td></tr>
+  </table>
+  <p class="small">「10回記事を読む」では、SR以上が1個以上確定します（9回目までに出なかった場合、10回目がSR以上になります）。曖昧さ回避ページは出ません。</p>
+  <button id="lawClose">閉じる</button>
+</div></div>
+<div id="boot"><div class="logo">Wikiガチャ</div><div class="bar"><div id="bootBar"></div></div><div id="bootPct">読み込み中 0%</div></div>
 <div id="credit"><div class="box">
   <h3>クレジット</h3>
   <p>記事の文章：Wikipedia日本語版の各記事（CC BY-SA 4.0）。各記事の出典はカードと記事リンクに表示しています。</p>
@@ -257,6 +306,10 @@
 <script>
 (() => {
   const $ = id => document.getElementById(id);
+  // ===== プリロード =====
+  const LD = { total: 0, done: 0, list: [] };
+  function track(p) { LD.total++; const q = Promise.resolve(p).catch(() => {}).then(() => { LD.done++; ldUpdate(); }); LD.list.push(q); return p; }
+  function ldUpdate() { const r = LD.total ? LD.done / LD.total : 0; $('bootBar').style.width = (r * 100).toFixed(0) + '%'; $('bootPct').textContent = `読み込み中 ${Math.round(r * 100)}%`; }
   const stage = $('stage'), dark = $('dark'), flash = $('flash'), rbp = $('rbp'), sub = { style: {} }, slash = $('slash'),
         urbg = $('urbg'), urshade = $('urshade'), rays1 = $('rays1'), rays2 = $('rays2'), urtext = $('urtext'), edge = $('edge'),
         cardWrap = $('cardWrap'), card = $('card'), btn = { dataset: {}, style: {} }, hint = $('hint'), ui = $('ui'),
@@ -309,7 +362,7 @@
   }
   let loaded = 0;
   ['s1','s2','s3','s4','s5','s6'].forEach((n, i) => { const im = new Image();
-    im.onload = () => { CH[i] = split(im); if (++loaded === 6) { setBtns(false); $('one').textContent = '1記事読む'; $('tenBtn').innerHTML = '10回記事を読む<small>SR1個以上確定！</small>'; } };
+    track(new Promise(res => { im.onload = () => { CH[i] = split(im); res(); }; im.onerror = res; }));
     im.src = `img/${n}.jpg`; });
 
   // シーン: 開始, 長さ, 揺れpx, 傾きdeg, グリッチ量
@@ -382,8 +435,8 @@
   const SND = { c: 'snd/c.mp3', r: 'snd/r.mp3', sr: 'snd/sr.mp3', ssr1: 'snd/ssr1.mp3', ssr2: 'snd/ssr2.mp3', bgm: 'snd/bgm.mp3' };
   try { AC = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { AC = null; }
   Object.entries(SND).forEach(([k, url]) => {
-    fetch(url).then(r => r.arrayBuffer()).then(ab => AC ? AC.decodeAudioData(ab) : null)
-      .then(b => { if (b) BUF[k] = b; }).catch(() => {});
+    track(fetch(url).then(r => r.arrayBuffer()).then(ab => AC ? AC.decodeAudioData(ab) : null)
+      .then(b => { if (b) BUF[k] = b; }).catch(() => {}));
   });
   function unlockAudio() { try { if (AC && AC.state !== 'running') AC.resume(); } catch (e) {} }
   function sfx(k, gain = 1) {
@@ -443,8 +496,8 @@
   let mode = 'UR', dia = null, shattered = false;
   const S = { land: 300, white: 750, crack: 1550, shatter: 1550, card: 2200, end: 3800 };
   const TEX0 = new Image(); let TEXR = null;
-  TEX0.onload = () => { const c = document.createElement('canvas'); c.width = TEX0.naturalHeight; c.height = TEX0.naturalWidth;
-    const x = c.getContext('2d'); x.translate(c.width, 0); x.rotate(Math.PI / 2); x.drawImage(TEX0, 0, 0); TEXR = c; };
+  track(new Promise(res => { TEX0.onload = () => { const c = document.createElement('canvas'); c.width = TEX0.naturalHeight; c.height = TEX0.naturalWidth;
+    const x = c.getContext('2d'); x.translate(c.width, 0); x.rotate(Math.PI / 2); x.drawImage(TEX0, 0, 0); TEXR = c; res(); }; TEX0.onerror = res; }));
   TEX0.src = 'img/diamond.jpg';
   const tex = () => (H > W && TEXR) ? TEXR : TEX0;
   const tw = im => im.naturalWidth || im.width, th = im => im.naturalHeight || im.height;
@@ -889,7 +942,7 @@
     const j = await api({ action: 'query', list: 'querypage', qppage: 'Mostlinked', qplimit: 500 });
     return (j.query.querypage.results || []).filter(r => r.ns === 0).map(r => r.title);
   }));
-  urPool.catch(() => {}); ssrPool.catch(() => {});
+  track(urPool); track(ssrPool);
   const pick = a => a[Math.floor(R() * a.length)];
 
   async function randomTitles(n) {
@@ -1089,6 +1142,8 @@
   document.querySelectorAll('#logSort button').forEach(b => b.addEventListener('click', () => { logSort = b.dataset.s; renderLog(); }));
 
   // ---------- クレジット ----------
+  $('lawBtn').addEventListener('click', () => $('law').style.display = 'flex');
+  $('lawClose').addEventListener('click', () => $('law').style.display = 'none');
   $('creditBtn').addEventListener('click', () => $('credit').style.display = 'flex');
   $('creditClose').addEventListener('click', () => $('credit').style.display = 'none');
 
@@ -1119,6 +1174,16 @@
 
   document.addEventListener('pointerdown', unlockAudio, { capture: true });
   document.addEventListener('click', unlockAudio, { capture: true });
+
+  // ===== 起動 =====
+  const bootStart = Date.now();
+  Promise.all(LD.list).then(() => setTimeout(() => {
+    $('bootPct').textContent = 'タップしてはじめる'; $('boot').classList.add('ready');
+    $('boot').addEventListener('click', () => {
+      unlockAudio(); $('boot').classList.add('out'); setTimeout(() => $('boot').style.display = 'none', 350);
+      setBtns(false); $('one').textContent = '1記事読む'; $('tenBtn').innerHTML = '10回記事を読む<small>SR1個以上確定！</small>';
+    }, { once: true });
+  }, Math.max(0, 400 - (Date.now() - bootStart))));
 })();
 </script>
 </body>
