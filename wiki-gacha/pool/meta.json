@@ -1,0 +1,35 @@
+{
+ "built": "2026-11-19",
+ "tiers": {
+  "SR": {
+   "count": 57816,
+   "chunks": 6,
+   "minLinks": 378,
+   "maxLinks": 420895
+  },
+  "R": {
+   "count": 144539,
+   "chunks": 15,
+   "minLinks": 148,
+   "maxLinks": 378
+  },
+  "UC": {
+   "count": 433618,
+   "chunks": 44,
+   "minLinks": 27,
+   "maxLinks": 148
+  },
+  "C": {
+   "count": 794967,
+   "chunks": 80,
+   "minLinks": 0,
+   "maxLinks": 27
+  },
+  "UR": {
+   "count": 132
+  },
+  "SSR": {
+   "count": 2545
+  }
+ }
+}
