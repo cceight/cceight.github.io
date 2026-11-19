@@ -167,8 +167,9 @@
   .mini .th { background-size: cover; background-position: center; }
   #list .lbtn { display: flex; gap: 12px; margin-top: 16px; } #list .lbtn .sharebtn { display: block; }
   #listClose { margin-top: 0; }
-  #list .lwrap { display: flex; flex-direction: column; align-items: stretch; gap: 12px; margin-top: 16px; } #list .lwrap .lbtn { margin-top: 0; }
-  #listAgain { width: 100%; margin: 0; }
+  #listBtns { position: absolute; z-index: 7; display: none; flex-direction: column; align-items: stretch; gap: 12px; }
+  #listBtns .lbtn { display: flex; gap: 12px; margin: 0; } #listBtns .lbtn .sharebtn { display: block; } #listBtns .lbtn button { flex: 1 1 auto; white-space: nowrap; padding-left: 14px; padding-right: 14px; }
+  #listAgain { width: 100%; margin: 0; padding: 0 24px; font-size: 18px; }
   /* C：ツヤなしのクリーム色の紙 */
   #card.c { background: linear-gradient(120deg, #efe5cf, #d9cbad, #efe5cf); animation: none; }
   #card.c.show { animation: flip .6s cubic-bezier(.2,1.5,.4,1) forwards; }
@@ -303,7 +304,8 @@
   <button id="creditClose">閉じる</button>
 </div></div>
 <button id="skip">スキップ ≫</button>
-<div id="list"><h2>10連 結果</h2><div id="grid"></div><div class="lwrap"><div class="lbtn"><button id="listShare" class="sharebtn">結果をツイートする</button><button id="listClose">閉じる</button></div><button id="listAgain" class="ten">もう一度回す</button></div></div>
+<div id="list"><h2>10連 結果</h2><div id="grid"></div></div>
+<div id="listBtns" class="lwrap"><div class="lbtn"><button id="listShare" class="sharebtn">結果をツイートする</button><button id="listClose">閉じる</button></div><button id="listAgain" class="ten">もう一度回す</button></div>
 
 <script>
 (() => {
@@ -1084,8 +1086,19 @@
       const inn = document.createElement('div'); inn.className = 'in'; inn.append(th, tx); a.append(inn);
       grid.appendChild(a); setTimeout(() => a.classList.add('on'), 60 * i);
     });
-    $('list').style.display = 'flex';
+    $('list').style.display = 'flex'; $('listBtns').style.display = 'flex'; placeListBtns();
   }
+  // 「もう一度回す」をトップの10連ボタンと同じ位置・大きさに置く
+  function placeListBtns() {
+    const lb = $('listBtns'), list = $('list'); if (lb.style.display !== 'flex') return;
+    const t = $('tenBtn').getBoundingClientRect(), base = (list.offsetParent || document.body).getBoundingClientRect();
+    lb.style.left = (t.left - base.left) + 'px'; lb.style.width = t.width + 'px';
+    lb.style.bottom = (base.bottom - t.bottom) + 'px'; $('listAgain').style.height = t.height + 'px';
+    // 一覧はボタンの上までに収め、はみ出す分はその中でスクロール
+    list.style.bottom = (base.bottom - lb.getBoundingClientRect().top + 8) + 'px'; list.style.paddingBottom = '8px';
+  }
+  addEventListener('resize', placeListBtns);
+  function hideList() { $('list').style.display = 'none'; $('listBtns').style.display = 'none'; dark.style.opacity = 0; }
   const skipBtn = $('skip');
   skipBtn.addEventListener('click', () => {
     if (!ten) return;
@@ -1093,8 +1106,8 @@
     const j = ten.seq.findIndex((r, k) => r === 'UR' && k > ten.i);
     if (j >= 0) { ten.i = j - 1; advanceTen(); } else showList();
   });
-  $('listClose').addEventListener('click', () => { $('list').style.display = 'none'; dark.style.opacity = 0; setBtns(false); ui.style.opacity = 1; ui.style.pointerEvents = ''; });
-  $('listAgain').addEventListener('click', () => { $('list').style.display = 'none'; dark.style.opacity = 0; setBtns(false); $('tenBtn').click(); });
+  $('listClose').addEventListener('click', () => { hideList(); setBtns(false); ui.style.opacity = 1; ui.style.pointerEvents = ''; });
+  $('listAgain').addEventListener('click', () => { hideList(); setBtns(false); $('tenBtn').click(); });
 
   // ---------- カードのタップで記事へ ----------
   $('card').addEventListener('click', () => { if (current && current.url && card.classList.contains('show')) window.open(current.url, '_blank', 'noopener'); });
