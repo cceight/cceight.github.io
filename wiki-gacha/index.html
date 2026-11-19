@@ -885,7 +885,7 @@
 
     const endT = mode === 'OPEN' ? OT.end : mode === 'SSR' ? S.end : mode === 'SR' ? SRT.end : mode === 'R' ? RT.end : (mode === 'UC' || mode === 'C') ? CT.end : T.end + P.end;
     if (ten) { if (t >= endT + (mode === 'OPEN' ? 0 : 800)) { advanceTen(); return; } }
-    else if (t >= endT && !btn.dataset.done) { setBtns(false); btn.dataset.done = '1'; ui.style.opacity = 1; $('share').style.display = 'block'; }
+    else if (t >= endT && !btn.dataset.done) { setBtns(false); btn.dataset.done = '1'; ui.style.opacity = 1; ui.style.pointerEvents = ''; $('share').style.display = 'block'; }
     requestAnimationFrame(frame);
   }
 
@@ -911,7 +911,7 @@
     srcEl.textContent = s;
   }
   function startRun(m, item) {
-    running = false; mode = m; reset(); setBtns(true); delete btn.dataset.done; hint.style.opacity = 0; ui.style.opacity = 0; $('share').style.display = 'none';
+    running = false; mode = m; reset(); setBtns(true); delete btn.dataset.done; hint.style.opacity = 0; ui.style.opacity = 0; ui.style.pointerEvents = 'none'; $('share').style.display = 'none';
     if (item) fillCard(item);
     requestAnimationFrame(() => { resize(); running = true; prev = 0; start = performance.now(); requestAnimationFrame(frame); });
   }
@@ -1040,9 +1040,9 @@
   }
   function loading(on, msg) { const l = $('loading'); l.textContent = msg || '記事を探しています…'; l.style.display = on ? 'flex' : 'none'; }
   async function fetchItems(n, guarantee) {
-    loading(true); setBtns(true); ui.style.opacity = 0; $('share').style.display = 'none';
+    loading(true); setBtns(true); ui.style.opacity = 0; ui.style.pointerEvents = 'none'; $('share').style.display = 'none';
     try { const meta = await POOL; const items = meta ? await drawPool(meta, n, guarantee) : await details(await drawMany(n, false)); loading(false); return items; }
-    catch (e) { loading(true, '通信に失敗しました。少し待ってからもう一度どうぞ'); setTimeout(() => { loading(false); setBtns(false); ui.style.opacity = 1; }, 2200); return null; }
+    catch (e) { loading(true, '通信に失敗しました。少し待ってからもう一度どうぞ'); setTimeout(() => { loading(false); setBtns(false); ui.style.opacity = 1; ui.style.pointerEvents = ''; }, 2200); return null; }
   }
 
   // ---------- 単発 ----------
@@ -1093,7 +1093,7 @@
     const j = ten.seq.findIndex((r, k) => r === 'UR' && k > ten.i);
     if (j >= 0) { ten.i = j - 1; advanceTen(); } else showList();
   });
-  $('listClose').addEventListener('click', () => { $('list').style.display = 'none'; dark.style.opacity = 0; setBtns(false); ui.style.opacity = 1; });
+  $('listClose').addEventListener('click', () => { $('list').style.display = 'none'; dark.style.opacity = 0; setBtns(false); ui.style.opacity = 1; ui.style.pointerEvents = ''; });
   $('listAgain').addEventListener('click', () => { $('list').style.display = 'none'; dark.style.opacity = 0; setBtns(false); $('tenBtn').click(); });
 
   // ---------- カードのタップで記事へ ----------
