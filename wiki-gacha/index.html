@@ -945,6 +945,36 @@
   track(urPool); track(ssrPool);
   const pick = a => a[Math.floor(R() * a.length)];
 
+  // ---------- 記事プール（第2段階：ダンプから作った棚から引く。確率は表どおり）----------
+  const POOL = track(fetch('pool/meta.json', { cache: 'no-cache' }).then(r => r.ok ? r.json() : null).catch(() => null));
+  const fileCache = {};
+  const poolFile = path => fileCache[path] || (fileCache[path] = fetch('pool/' + path).then(r => { if (!r.ok) throw new Error('pool ' + path); return r.json(); }).catch(e => { delete fileCache[path]; throw e; }));
+  POOL.then(m => { if (m) { poolFile('UR.json').catch(() => {}); poolFile('SSR.json').catch(() => {}); } });
+  function rollTier(g) { const x = R() * (g ? 5 : 100); return x < .05 ? 'UR' : x < 1 ? 'SSR' : x < 5 ? 'SR' : x < 15 ? 'R' : x < 45 ? 'UC' : 'C'; }
+  async function pickId(meta, tier) {
+    if (tier === 'UR' || tier === 'SSR') return pick(await poolFile(tier + '.json'));
+    const n = meta.tiers[tier].chunks; return pick(await poolFile(`${tier}/${Math.floor(R() * n)}.json`));
+  }
+  async function drawPool(meta, n, guaranteeLast) {
+    const tiers = [];
+    for (let i = 0; i < n; i++) tiers.push(rollTier(guaranteeLast && i === n - 1 && !tiers.some(t => RANK[t] >= 3)));
+    const items = tiers.map(t => ({ rarity: t, id: null }));
+    for (let round = 0; round < 4; round++) {
+      const todo = items.filter(it => !it.title);
+      if (!todo.length) break;
+      await Promise.all(todo.map(async it => { it.id = await pickId(meta, it.rarity); }));
+      const j = await api({ action: 'query', pageids: todo.map(it => it.id).join('|'), prop: 'extracts|pageimages|info|pageprops',
+        exintro: 1, explaintext: 1, exlimit: 'max', exchars: 300, piprop: 'thumbnail|name', pithumbsize: 480, inprop: 'url', ppprop: 'disambiguation' });
+      const byId = {}; (j.query.pages || []).forEach(pg => byId[pg.pageid] = pg);
+      todo.forEach(it => { const pg = byId[it.id];
+        if (!pg || pg.missing || pg.ns !== 0 || (pg.pageprops && 'disambiguation' in pg.pageprops)) return;
+        it.title = pg.title; it.extract = pg.extract || ''; it.url = pg.fullurl || ('https://ja.wikipedia.org/wiki/' + encodeURIComponent(pg.title));
+        if (pg.thumbnail) { it.thumb = pg.thumbnail.source; it.file = pg.pageimage; } });
+    }
+    if (items.some(it => !it.title)) throw new Error('pool draw failed');
+    return licenses(items);
+  }
+
   async function randomTitles(n) {
     const out = [];
     for (let k = 0; k < 4 && out.length < n; k++) {
@@ -993,6 +1023,9 @@
         if (j.thumbnail) { it.thumb = j.thumbnail.source; it.file = decodeURIComponent((j.originalimage || j.thumbnail).source.split('/').pop()); }
       } catch (e) { it.url = 'https://ja.wikipedia.org/wiki/' + encodeURIComponent(it.title); }
     });
+    return licenses(items);
+  }
+  async function licenses(items) {
     const files = [...new Set(items.filter(i => i.file).map(i => 'File:' + i.file))];
     if (files.length) try {
       const j = await api({ action: 'query', titles: files.join('|'), prop: 'imageinfo', iiprop: 'extmetadata', iiextmetadatafilter: 'Artist|LicenseShortName' });
@@ -1006,7 +1039,7 @@
   function loading(on, msg) { const l = $('loading'); l.textContent = msg || '記事を探しています…'; l.style.display = on ? 'flex' : 'none'; }
   async function fetchItems(n, guarantee) {
     loading(true); setBtns(true); ui.style.opacity = 0; $('share').style.display = 'none';
-    try { const items = await details(await drawMany(n, guarantee)); loading(false); return items; }
+    try { const meta = await POOL; const items = meta ? await drawPool(meta, n, guarantee) : await details(await drawMany(n, false)); loading(false); return items; }
     catch (e) { loading(true, '通信に失敗しました。少し待ってからもう一度どうぞ'); setTimeout(() => { loading(false); setBtns(false); ui.style.opacity = 1; }, 2200); return null; }
   }
 
@@ -1021,7 +1054,7 @@
   let ten = null, lastResult = null;
   $('tenBtn').addEventListener('click', async () => {
     unlockAudio(); stopBgm(); cardWrap.style.opacity = 0;
-    let items = await fetchItems(10, false); if (!items) return;
+    let items = await fetchItems(10, true); if (!items) return;
     if (!items.some(i => RANK[i.rarity] >= 3)) { // SR1個以上確定
       try { const g = await details(await drawMany(1, true)); items[9] = g[0]; } catch (e) {}
     }
