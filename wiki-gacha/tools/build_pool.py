@@ -25,10 +25,15 @@ def log(*a):
     print(time.strftime('%H:%M:%S'), *a, flush=True)
 
 def lines(name):
+    n = shown = 0
     with gzip.open(os.path.join(SRC, name), 'rb') as f:
         for line in f:
+            if shown < 3 and (b'INSERT' in line[:200] or b'CREATE TABLE' in line[:200] or n < 60):
+                if b'INSERT' in line[:200] or b'CREATE' in line[:200]: log('  sample', name, line[:600]); shown += 1
+            n += 1
             if line.startswith(b'INSERT INTO'):
                 yield line
+    log('  read lines', name, n)
 
 def unesc(b):
     return re.sub(rb'\\(.)', rb'\1', b).decode('utf-8', 'replace')
