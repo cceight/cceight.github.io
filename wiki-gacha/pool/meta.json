@@ -1,5 +1,5 @@
 {
- "built": "2026-11-19",
+ "built": "2026-11-21",
  "tiers": {
   "SR": {
    "count": 57816,
@@ -20,7 +20,7 @@
    "maxLinks": 148
   },
   "C": {
-   "count": 794967,
+   "count": 794966,
    "chunks": 80,
    "minLinks": 0,
    "maxLinks": 27
@@ -29,7 +29,7 @@
    "count": 132
   },
   "SSR": {
-   "count": 2545
+   "count": 2546
   }
  }
 }
